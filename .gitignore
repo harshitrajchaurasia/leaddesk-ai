@@ -7,3 +7,4 @@ data/outbox.jsonl
 page/
 leaddesk.db
 STATUS.md
+.demo-credentials
