@@ -1,0 +1,10 @@
+[
+  {"id": "C-01", "name": "Harbor Retirement Advisors", "vertical": "annuity", "states": ["FL", "GA", "SC"], "plan": "Growth - 60 exclusive leads/mo", "account_manager": "Priya Shah"},
+  {"id": "C-02", "name": "Summit Annuity Group", "vertical": "annuity", "states": ["TX", "OK", "LA"], "plan": "Scale - 120 exclusive leads/mo", "account_manager": "Marcus Lee"},
+  {"id": "C-03", "name": "BlueOak IUL Partners", "vertical": "iul", "states": ["CA", "AZ", "NV"], "plan": "Growth - 60 exclusive leads/mo", "account_manager": "Priya Shah"},
+  {"id": "C-04", "name": "Liberty Life Agency", "vertical": "life", "states": ["OH", "PA", "MI"], "plan": "Starter - 30 exclusive leads/mo", "account_manager": "Dana Brooks"},
+  {"id": "C-05", "name": "Golden Years Final Expense", "vertical": "final_expense", "states": ["AL", "MS", "TN"], "plan": "Scale - 120 exclusive leads/mo", "account_manager": "Marcus Lee"},
+  {"id": "C-06", "name": "Heritage Final Expense Co", "vertical": "final_expense", "states": ["NC", "VA"], "plan": "Growth - 60 exclusive leads/mo", "account_manager": "Dana Brooks"},
+  {"id": "C-07", "name": "Northstar Retirement Planning", "vertical": "retirement_planning", "states": ["IL", "WI", "MN"], "plan": "Growth - 60 exclusive leads/mo", "account_manager": "Priya Shah"},
+  {"id": "C-08", "name": "ClearPath Debt Solutions", "vertical": "debt_relief", "states": ["NY", "NJ"], "plan": "Starter - 30 exclusive leads/mo", "account_manager": "Dana Brooks"}
+]

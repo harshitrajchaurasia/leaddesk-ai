@@ -1,0 +1,26 @@
+from conftest import make_result
+from fastapi.testclient import TestClient
+
+import api
+
+client = TestClient(api.app)
+BODY = {"id": "T-1", "client_id": "C-01", "subject": "s", "body": "b", "received_at": "2026-11-20T15:00:00"}
+
+
+def test_webhook_ok(monkeypatch):
+    monkeypatch.setattr(api, "process_ticket", lambda t, conn: make_result())
+    r = client.post("/webhook/ticket", json=BODY)
+    assert r.status_code == 200
+    assert r.json()["queue"] == "billing"
+
+
+def test_unknown_client_404(monkeypatch):
+    def boom(t, conn):
+        raise KeyError("unknown client C-99")
+    monkeypatch.setattr(api, "process_ticket", boom)
+    assert client.post("/webhook/ticket", json={**BODY, "client_id": "C-99"}).status_code == 404
+
+
+def test_bad_body_422():
+    assert client.post("/webhook/ticket", json={"client_id": "C-01"}).status_code == 422
+    assert client.post("/webhook/ticket", json={**BODY, "body": ""}).status_code == 422
