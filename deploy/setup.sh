@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-shot deploy for an Oracle Cloud Ubuntu VM (22.04/24.04, x86 or ARM).
-# Puts Streamlit (8501) and the webhook API (8000) behind Caddy with HTTPS + a demo password.
+# Puts the FastAPI app (UI + webhook, 8000) behind Caddy with HTTPS + a demo password.
 #
 # Usage, from the repo folder on the VM (with .env already filled in):
 #   DEMO_USER=demo DEMO_PASS='pick-a-password' bash deploy/setup.sh
@@ -14,6 +14,7 @@ DOMAIN=${DOMAIN:-$(curl -s https://ifconfig.me).sslip.io}
 
 [ -f "$APP_DIR/.env" ] || { echo "Missing $APP_DIR/.env - copy .env.example and fill in keys first"; exit 1; }
 chmod 600 "$APP_DIR/.env"
+grep -q "^DEMO_PASS=." "$APP_DIR/.env" || printf "DEMO_USER=%s\nDEMO_PASS=%s\n" "$DEMO_USER" "$DEMO_PASS" >> "$APP_DIR/.env"
 
 echo "==> packages + Caddy"
 sudo apt-get update -y
@@ -46,7 +47,6 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 }
-write_unit leaddesk-app "$APP_DIR/.venv/bin/streamlit run app.py"
 write_unit leaddesk-api "$APP_DIR/.venv/bin/uvicorn api:app --host 127.0.0.1 --port 8000"
 
 echo "==> Caddy (HTTPS + basic auth; /health stays open)"
@@ -54,17 +54,12 @@ HASH=$(caddy hash-password --plaintext "$DEMO_PASS")
 sudo tee /etc/caddy/Caddyfile >/dev/null <<EOF
 $DOMAIN {
 	encode gzip
-	@protected not path /health
+	# UI signs in itself (DEMO_USER/DEMO_PASS in .env); webhook + docs keep basic auth
+	@protected path /webhook/* /docs /openapi.json
 	basic_auth @protected {
 		$DEMO_USER $HASH
 	}
-	@api path /health /webhook/* /docs /openapi.json
-	handle @api {
-		reverse_proxy 127.0.0.1:8000
-	}
-	handle {
-		reverse_proxy 127.0.0.1:8501
-	}
+	reverse_proxy 127.0.0.1:8000
 }
 EOF
 
@@ -74,10 +69,10 @@ sudo iptables -C "${RULE[@]}" 2>/dev/null || sudo iptables -I "${RULE[@]}"
 command -v netfilter-persistent >/dev/null && sudo netfilter-persistent save
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now leaddesk-app leaddesk-api
-sudo systemctl restart leaddesk-app leaddesk-api caddy
+sudo systemctl enable --now leaddesk-api
+sudo systemctl restart leaddesk-api caddy
 
 echo
 echo "Done. Open https://$DOMAIN  (user: $DEMO_USER)"
 echo "Also add Ingress rules for TCP 80 and 443 from 0.0.0.0/0 in the OCI console (VCN > Security List), if not done."
-echo "Logs: journalctl -u leaddesk-app -f   |   journalctl -u caddy -f"
+echo "Logs: journalctl -u leaddesk-api -f   |   journalctl -u caddy -f"

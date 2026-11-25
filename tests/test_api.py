@@ -24,3 +24,19 @@ def test_unknown_client_404(monkeypatch):
 def test_bad_body_422():
     assert client.post("/webhook/ticket", json={"client_id": "C-01"}).status_code == 422
     assert client.post("/webhook/ticket", json={**BODY, "body": ""}).status_code == 422
+
+
+def test_login_gate(monkeypatch):
+    monkeypatch.setenv("DEMO_USER", "demo")
+    monkeypatch.setenv("DEMO_PASS", "s3cret")
+    c = TestClient(api.app, base_url="https://testserver")  # cookie is Secure
+    assert c.get("/api/results").status_code == 401
+    assert c.post("/api/login", json={"username": "demo", "password": "nope"}).status_code == 401
+    assert c.post("/api/login", json={"username": "demo", "password": "s3cret"}).status_code == 200
+    assert c.get("/api/results").status_code == 200  # cookie set by login
+    monkeypatch.setenv("DEMO_PASS", "rotated")
+    assert c.get("/api/results").status_code == 401  # rotating the password logs everyone out
+
+
+def test_index_served():
+    assert client.get("/").status_code == 200

@@ -2,7 +2,6 @@ anthropic
 openai
 pydantic>=2
 requests
-streamlit
 fastapi
 uvicorn
 httpx

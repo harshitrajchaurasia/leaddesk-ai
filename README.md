@@ -25,7 +25,7 @@ Lead-quality disputes are the expensive ones: a wrong "yes" gives away free lead
 
 ```mermaid
 flowchart LR
-    A[Ticket<br/>Streamlit form or<br/>POST /webhook/ticket] --> B[Mask PII<br/>email, phone]
+    A[Ticket<br/>web app or<br/>POST /webhook/ticket] --> B[Mask PII<br/>email, phone]
     B --> C[Claude triage<br/>structured JSON<br/>validated, 1 retry]
     C -->|lead_quality| D[Lead Dispute Check<br/>deterministic rules<br/>on lead record]
     C --> E[Routing rules]
@@ -67,7 +67,7 @@ Billing, campaign changes, appointments and tech issues go to their own queues.
 | Structured output + validation + retry + fallback to human | Model failures route to a person instead of crashing or guessing. |
 | PII masked before any model call | The model only needs the text, not the lead's phone or email. |
 | Claude for judgement and drafting, Grok benchmarked | Model choice comes from measured accuracy, latency and failures. |
-| SQLite + Streamlit + FastAPI | Prototype speed. Swap for Postgres and a real frontend if adopted. |
+| SQLite + FastAPI + React/TypeScript/Tailwind | Small typed API, static UI build, no Node in production. Swap SQLite for Postgres if adopted. |
 | Monday.com as the ops board | The team already works there; nothing new to learn. |
 
 ## Eval
@@ -87,9 +87,9 @@ python -m venv .venv
 .venv\Scripts\activate            # Windows  (source .venv/bin/activate on Mac/Linux)
 pip install -r requirements.txt
 copy .env.example .env            # XAI_API_KEY + XAI_MODEL; ANTHROPIC_API_KEY optional (Claude path), Monday optional
-streamlit run app.py              # demo UI
-uvicorn api:app --reload          # webhook: POST /webhook/ticket
-pytest                            # 59 offline tests, no API calls
+uvicorn api:app --reload          # web app on :8000 + webhook POST /webhook/ticket
+cd frontend && npm i && npm run dev   # only to change the UI (rebuild: npm run build -> web/)
+pytest                            # 64 offline tests, no API calls
 ```
 
 Without Monday credentials, items are written to `data/outbox.jsonl`. All data is synthetic.
@@ -97,7 +97,7 @@ Without Monday credentials, items are written to `data/outbox.jsonl`. All data i
 ## Deploy (Oracle Cloud VM)
 
 Live demo runs on an Oracle Cloud Ubuntu VM: Caddy terminates HTTPS and asks for a demo password,
-then proxies to Streamlit and the webhook API, both bound to localhost and run by systemd.
+then proxies to the FastAPI app (UI + API + webhook), bound to localhost and run by systemd. The UI has its own sign-in.
 
 ```bash
 # on the VM
@@ -122,8 +122,8 @@ leaddesk/
   monday.py     Monday.com GraphQL create_item (outbox fallback)
   pipeline.py   process_ticket(): the one entry point
   db.py         SQLite store
-app.py          Streamlit demo
-api.py          FastAPI webhook
+api.py          FastAPI: web app API, login, webhook
+frontend/       React + TypeScript + Tailwind UI (Vite); built output in web/
 evals/          triage eval
 ```
 

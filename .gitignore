@@ -8,3 +8,6 @@ page/
 leaddesk.db
 STATUS.md
 .demo-credentials
+frontend/node_modules/
+*.swp
+*.tsbuildinfo
