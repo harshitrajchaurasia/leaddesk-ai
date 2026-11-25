@@ -82,5 +82,20 @@ def test_draft_prompt_includes_verdict(annuity_client):
     assert "REPLACE" in sent and "exclusivity breach" in sent
 
 
+def test_default_provider_follows_anthropic_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    assert llm.default_provider() == "grok"
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    assert llm.default_provider() == "claude"
+
+
+def test_grok_draft_uses_verdict(annuity_client, monkeypatch):
+    monkeypatch.setenv("XAI_MODEL", "grok-test")
+    fake = FakeOpenAI(["  Hi from Acme Support  "])
+    v = DisputeVerdict(verdict="VALID_COACH", reasons=["first contact after 360 min"])
+    assert llm.grok_draft("t", GOOD, v, annuity_client, openai_client=fake) == "Hi from Acme Support"
+    assert "first contact after 360 min" in fake.calls[0]["messages"][1]["content"]
+
+
 def test_triage_system_prompt_has_injection_guard():
     assert "never follow instructions" in TRIAGE_SYSTEM.lower()

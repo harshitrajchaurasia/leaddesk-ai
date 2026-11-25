@@ -10,7 +10,7 @@ API_URL = "https://api.monday.com/v2"
 # ponytail: hardcoded column ids; copy real ids from your board (column menu > "Column id")
 COLUMNS = {"status": "status", "priority": "priority", "category": "text", "client": "text0", "summary": "long_text"}
 MUTATION = """mutation ($board: ID!, $name: String!, $vals: JSON!) {
-  create_item (board_id: $board, item_name: $name, column_values: $vals) { id }
+  create_item (board_id: $board, item_name: $name, column_values: $vals, create_labels_if_missing: true) { id }
 }"""
 
 

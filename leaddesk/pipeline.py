@@ -8,13 +8,14 @@ from .pii import mask
 from .routing import route
 
 
-def process_ticket(ticket: Ticket, conn, *, provider: Literal["claude", "grok"] = "claude",
+def process_ticket(ticket: Ticket, conn, *, provider: Literal["claude", "grok"] | None = None,
                    triage_fn=None, draft_fn=None, monday_fn=None) -> Result:
     client = db.get_client(conn, ticket.client_id)
     if client is None:
         raise KeyError(f"unknown client {ticket.client_id}")
-    triage_fn = triage_fn or (llm.grok_triage if provider == "grok" else llm.claude_triage)
-    draft_fn = draft_fn or llm.draft_reply
+    provider = provider or llm.default_provider()
+    triage_fn = triage_fn or llm.TRIAGE[provider]
+    draft_fn = draft_fn or llm.DRAFT[provider]
     monday_fn = monday_fn or monday.create_item
 
     start = time.perf_counter()

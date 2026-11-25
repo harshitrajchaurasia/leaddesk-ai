@@ -19,6 +19,8 @@ An agency like this gets the same tickets all day from its agent clients:
 Each one needs a lookup, a judgement call (replace the lead or not?), the right owner, and a careful reply.
 Lead-quality disputes are the expensive ones: a wrong "yes" gives away free leads, a wrong "no" loses a client.
 
+**Models:** runs on the Grok (xAI) API by default. The same pipeline runs on Claude when `ANTHROPIC_API_KEY` is set (Claude structured outputs for triage, Claude for drafting). Both paths share prompts, validation, retries and the human fallback, and both are covered by offline tests.
+
 ## How it works
 
 ```mermaid
@@ -84,7 +86,7 @@ Billing, campaign changes, appointments and tech issues go to their own queues.
 python -m venv .venv
 .venv\Scripts\activate            # Windows  (source .venv/bin/activate on Mac/Linux)
 pip install -r requirements.txt
-copy .env.example .env            # add ANTHROPIC_API_KEY, XAI_API_KEY, XAI_MODEL; Monday optional
+copy .env.example .env            # XAI_API_KEY + XAI_MODEL; ANTHROPIC_API_KEY optional (Claude path), Monday optional
 streamlit run app.py              # demo UI
 uvicorn api:app --reload          # webhook: POST /webhook/ticket
 pytest                            # 59 offline tests, no API calls

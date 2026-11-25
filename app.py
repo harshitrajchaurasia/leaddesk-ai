@@ -28,7 +28,8 @@ samples = {f"{t['id']} - {t['subject']}": t for t in json.loads(Path("data/ticke
 VERDICT_STYLE = {"REPLACE": ":green[REPLACE]", "VALID_COACH": ":blue[VALID - COACH AGENT]", "NEEDS_REVIEW": ":orange[NEEDS REVIEW]"}
 
 st.title("LeadDesk AI")
-st.caption("AI support desk for a lead-gen agency: triage, lead dispute check, routing, drafted replies, Monday.com.")
+st.caption(f"AI support desk for a lead-gen agency: triage, lead dispute check, routing, drafted replies, Monday.com. "
+           f"Model: **{llm.default_provider().title()}**")
 tab_new, tab_inbox, tab_compare, tab_metrics = st.tabs(["New ticket", "Inbox", "Claude vs Grok", "Metrics"])
 
 
@@ -86,14 +87,19 @@ with tab_compare:
         text, client = mask(f"{ticket.subject}\n{ticket.body}"), clients[ticket.client_id]
         cols = st.columns(2)
         for col, (name, fn) in zip(cols, [("Claude", llm.claude_triage), ("Grok", llm.grok_triage)]):
+            if name == "Claude" and llm.default_provider() != "claude":
+                col.info("Claude path is implemented and tested; no Anthropic key on this deployment.")
+                st.session_state["cmp_Claude"] = None
+                continue
             start = datetime.now()
             t = fn(text, client)
             col.subheader(f"{name} - {(datetime.now() - start).total_seconds():.1f}s")
             col.json(t.model_dump())
             st.session_state[f"cmp_{name}"] = t
         a, b = st.session_state["cmp_Claude"], st.session_state["cmp_Grok"]
-        diffs = [k for k in ("category", "urgency", "sentiment", "lead_id") if getattr(a, k) != getattr(b, k)]
-        st.warning(f"Disagree on: {', '.join(diffs)}") if diffs else st.success("Models agree on category, urgency, sentiment, lead id.")
+        if a is not None:
+            diffs = [k for k in ("category", "urgency", "sentiment", "lead_id") if getattr(a, k) != getattr(b, k)]
+            st.warning(f"Disagree on: {', '.join(diffs)}") if diffs else st.success("Models agree on category, urgency, sentiment, lead id.")
 
 with tab_metrics:
     results = db.list_results(conn)

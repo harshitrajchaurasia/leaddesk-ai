@@ -39,11 +39,20 @@ def claude_triage(ticket_text: str, client: Client, *, anthropic_client=None) ->
     return FALLBACK_TRIAGE
 
 
+def default_provider() -> str:
+    """Claude when an Anthropic key is set, otherwise Grok (or any OpenAI-compatible endpoint via XAI_BASE_URL)."""
+    return "claude" if os.getenv("ANTHROPIC_API_KEY") else "grok"
+
+
+def _xai():
+    return openai.OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url=os.getenv("XAI_BASE_URL") or "https://api.x.ai/v1")
+
+
 def grok_triage(ticket_text: str, client: Client, *, openai_client=None) -> Triage:
     schema = {"name": "triage", "schema": Triage.model_json_schema()}
     for attempt in range(ATTEMPTS):
         try:
-            c = openai_client or openai.OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
+            c = openai_client or _xai()
             resp = c.chat.completions.create(
                 model=os.environ["XAI_MODEL"],
                 messages=[{"role": "system", "content": TRIAGE_SYSTEM},
@@ -77,3 +86,22 @@ def draft_reply(ticket_text: str, triage: Triage, verdict: DisputeVerdict | None
     except Exception as e:
         log.warning("draft failed: %r", e)
         return f"[draft unavailable: {type(e).__name__}] Please write this reply manually."
+
+
+def grok_draft(ticket_text: str, triage: Triage, verdict: DisputeVerdict | None, client: Client,
+               *, openai_client=None) -> str:
+    try:
+        c = openai_client or _xai()
+        resp = c.chat.completions.create(
+            model=os.environ["XAI_MODEL"],
+            messages=[{"role": "system", "content": DRAFT_SYSTEM},
+                      {"role": "user", "content": _draft_prompt(ticket_text, triage, verdict, client)}],
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as e:
+        log.warning("grok draft failed: %r", e)
+        return f"[draft unavailable: {type(e).__name__}] Please write this reply manually."
+
+
+TRIAGE = {"claude": claude_triage, "grok": grok_triage}
+DRAFT = {"claude": draft_reply, "grok": grok_draft}

@@ -1,4 +1,4 @@
-"""Triage eval on 40 labelled tickets.  Run: python -m evals.run_eval --provider both"""
+"""Triage eval on 40 labelled tickets.  Run: python -m evals.run_eval --provider grok   (or claude / both)"""
 import argparse
 import json
 import time
@@ -20,7 +20,7 @@ def score(pairs: list[tuple]) -> float:
 
 
 def run(provider: str, conn, tickets: list[LabeledTicket]) -> dict:
-    fn = llm.grok_triage if provider == "grok" else llm.claude_triage
+    fn = llm.TRIAGE[provider]
     cats, queues, esc, latencies, fallbacks, misses = [], [], [], [], 0, []
     for t in tickets:
         client = db.get_client(conn, t.client_id)
@@ -48,12 +48,12 @@ def run(provider: str, conn, tickets: list[LabeledTicket]) -> dict:
 def main():
     load_dotenv()
     p = argparse.ArgumentParser()
-    p.add_argument("--provider", choices=["claude", "grok", "both"], default="claude")
+    p.add_argument("--provider", choices=["claude", "grok", "both"], default=None)
     args = p.parse_args()
     conn = db.connect(":memory:")
     db.seed(conn)
     tickets = [LabeledTicket(**t) for t in json.loads(Path("data/tickets.json").read_text())]
-    providers = ["claude", "grok"] if args.provider == "both" else [args.provider]
+    providers = ["claude", "grok"] if args.provider == "both" else [args.provider or llm.default_provider()]
     results = [run(pr, conn, tickets) for pr in providers]
     print(f"\n{'provider':10}{'category':>10}{'queue':>8}{'escal.':>8}{'avg ms':>9}{'fallbk':>8}")
     for r in results:
