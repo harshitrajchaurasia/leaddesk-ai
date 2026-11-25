@@ -6,3 +6,4 @@ data/outbox.jsonl
 .pytest_cache/
 page/
 leaddesk.db
+STATUS.md

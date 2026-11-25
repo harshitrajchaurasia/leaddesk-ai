@@ -7,8 +7,9 @@ import requests
 from .models import Result
 
 API_URL = "https://api.monday.com/v2"
-# ponytail: hardcoded column ids; copy real ids from your board (column menu > "Column id")
-COLUMNS = {"status": "status", "priority": "priority", "category": "text", "client": "text0", "summary": "long_text"}
+# ponytail: hardcoded column ids of board "LeadDesk AI - Support Tickets"; other board = copy ids from column menu
+COLUMNS = {"status": "color_mm9ee7h7", "priority": "color_mm9eks62", "category": "text_mm9edt4z", "client": "text_mm9e8may",
+           "summary": "long_text_mm9ewh32"}
 MUTATION = """mutation ($board: ID!, $name: String!, $vals: JSON!) {
   create_item (board_id: $board, item_name: $name, column_values: $vals, create_labels_if_missing: true) { id }
 }"""

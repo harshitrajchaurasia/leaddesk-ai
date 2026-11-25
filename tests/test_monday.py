@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 from conftest import make_result
 
-from leaddesk.monday import create_item
+from leaddesk.monday import COLUMNS, create_item
 
 
 def fake_post(payload):
@@ -28,7 +28,7 @@ def test_posts_mutation_and_returns_id(tmp_path):
     assert item == "123"
     variables = calls[0]["json"]["variables"]
     assert variables["board"] == "42"
-    assert json.loads(variables["vals"])["text"] == "billing"
+    assert json.loads(variables["vals"])[COLUMNS["category"]] == "billing"
     assert calls[0]["headers"]["Authorization"] == "tok"
 
 
