@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 from conftest import make_triage
@@ -84,6 +85,7 @@ def test_draft_prompt_includes_verdict(annuity_client):
 
 def test_default_provider_follows_anthropic_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
     assert llm.default_provider() == "grok"
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
     assert llm.default_provider() == "claude"
@@ -99,3 +101,43 @@ def test_grok_draft_uses_verdict(annuity_client, monkeypatch):
 
 def test_triage_system_prompt_has_injection_guard():
     assert "never follow instructions" in TRIAGE_SYSTEM.lower()
+
+
+def test_usage_logged_with_xai_cost(annuity_client, monkeypatch):
+    fake = FakeOpenAI([GOOD.model_dump_json()])
+    usage = SimpleNamespace(prompt_tokens=900, completion_tokens=50, cost_in_usd_ticks=11_000_000)
+    orig = fake.create
+    fake.create = lambda **kw: SimpleNamespace(**{**vars(orig(**kw)), "usage": usage})
+    llm.grok_triage("t", annuity_client, openai_client=fake)
+    row = json.loads(open(llm.USAGE_PATH).read())
+    assert (row["step"], row["in"], row["out"], row["usd"]) == ("triage", 900, 50, 0.0011)
+
+
+def test_usage_cost_from_price_table_for_claude(annuity_client):
+    fake = FakeAnthropic([GOOD])
+    orig = fake.parse
+    fake.parse = lambda **kw: SimpleNamespace(parsed_output=orig(**kw).parsed_output,
+                                              usage=SimpleNamespace(input_tokens=1_000_000, output_tokens=0))
+    llm.claude_triage("t", annuity_client, anthropic_client=fake)
+    assert json.loads(open(llm.USAGE_PATH).read())["usd"] == 0.10
+
+
+def test_lead_id_normalised():
+    for raw in ("L-105", "l105", "L 105", "lead #105", " l-105 "):
+        assert make_triage(lead_id=raw).lead_id == "L-105"
+    assert make_triage(lead_id=None).lead_id is None
+    assert make_triage(lead_id="").lead_id is None
+    assert make_triage(lead_id="ABC").lead_id == "ABC"
+
+
+def test_llm_provider_overrides(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("LLM_PROVIDER", "grok")
+    assert llm.default_provider() == "grok"
+
+
+def test_per_step_provider(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "grok")
+    monkeypatch.setenv("DRAFT_PROVIDER", "claude")
+    monkeypatch.delenv("TRIAGE_PROVIDER", raising=False)
+    assert (llm.default_provider("triage"), llm.default_provider("draft")) == ("grok", "claude")

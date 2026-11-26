@@ -18,7 +18,10 @@ Fields:
   normal = typical request; low = informational.
 - sentiment: positive, neutral, frustrated, angry.
 - churn_risk: 0-1 probability this client cancels soon (cancellation intent >= 0.8; repeated anger 0.5-0.7; routine requests <= 0.2).
-- lead_id: the lead id exactly as written if the ticket names one (format L-123), else null.
+  A conditional threat ("fix this or I'm cancelling", "thinking about switching") is cancellation intent.
+  It measures the client leaving us. Legal or compliance threats from a lead raise urgency, not churn_risk,
+  unless the client also says they may leave.
+- lead_id: the lead id if the ticket names one, written as L-123 (customers type it as "l123", "L 123", "lead #123"), else null.
 - summary: one neutral line, max 25 words, no personal data.
 - confidence: 0-1, how sure you are of the category.
 

@@ -1,0 +1,21 @@
+{
+ "model": "distilbert-base-uncased",
+ "train_rows": 1373,
+ "train_seconds": 77.2,
+ "device": "cuda",
+ "core": {
+  "acc": 0.95,
+  "ms_per_ticket": 0.9,
+  "misses": [
+   "T-024: expected campaign_change, got other",
+   "T-037: expected cancellation, got lead_quality"
+  ]
+ },
+ "hard": {
+  "acc": 0.944,
+  "ms_per_ticket": 1.4,
+  "misses": [
+   "H-10: expected lead_quality, got appointments"
+  ]
+ }
+}

@@ -54,3 +54,16 @@ def test_login_lockout_and_expiry(monkeypatch):
     api._fails.clear()
     assert not api._authed(api._token(1))  # expired cookie
     assert not api._authed("garbage")
+
+
+def test_usage_summary(monkeypatch):
+    import json
+    from leaddesk import llm
+    rows = [{"tag": "app", "step": "triage", "usd": 0.001, "ms": 900}, {"tag": "app", "step": "triage", "usd": 0.002, "ms": 1100},
+            {"tag": "app", "step": "draft", "usd": 0.003, "ms": 2000}, {"tag": "eval", "step": "triage", "usd": 0.5, "ms": 1}]
+    with open(llm.USAGE_PATH, "w") as f:  # conftest points USAGE_PATH at a tmp file
+        f.write("".join(json.dumps(r) + "\n" for r in rows))
+    monkeypatch.delenv("DEMO_PASS", raising=False)
+    got = client.get("/api/usage").json()
+    assert got["app"]["triage"] == {"calls": 2, "usd": 0.003, "avg_ms": 1000}
+    assert got["app"]["draft"]["usd"] == 0.003 and got["other_usd"] == 0.5

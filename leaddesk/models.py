@@ -1,7 +1,8 @@
+import re
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 Vertical = Literal["annuity", "iul", "life", "final_expense", "retirement_planning", "debt_relief"]
 Category = Literal["lead_quality", "billing", "campaign_change", "appointments", "tech_access", "cancellation", "other"]
@@ -45,8 +46,9 @@ class Ticket(BaseModel):
 
 
 class LabeledTicket(Ticket):
-    expected_category: Category
+    expected_category: Category | list[Category]  # a list when more than one reading is defensible
     expected_queue: Queue
+    expected_lead_id: str | None = None  # only read when present in the JSON; else taken from the body
 
 
 class Triage(BaseModel):
@@ -54,9 +56,16 @@ class Triage(BaseModel):
     urgency: Urgency
     sentiment: Literal["positive", "neutral", "frustrated", "angry"]
     churn_risk: float = Field(ge=0, le=1, description="0-1 likelihood the client cancels")
-    lead_id: str | None = Field(default=None, description="Lead id like L-1042 if the ticket names one")
+    lead_id: str | None = Field(description="Lead id like L-1042 if the ticket names one, else null")  # required: models skip optional fields
     summary: str = Field(description="One line, max 25 words")
     confidence: float = Field(ge=0, le=1, description="0-1 confidence in the category")
+
+    @field_validator("lead_id")
+    @classmethod
+    def _normalise_lead_id(cls, v: str | None) -> str | None:
+        """'l105', 'L 105', 'lead #105' -> 'L-105' so the lookup matches; anything else passes through."""
+        m = re.fullmatch(r"\s*(?:lead\s*#?|L)\s*-?\s*#?\s*(\d+)\s*", v or "", re.I)
+        return f"L-{m.group(1)}" if m else (v or None)
 
 
 class DisputeVerdict(BaseModel):
@@ -71,9 +80,16 @@ class Route(BaseModel):
     reasons: list[str] = []
 
 
+class MLOpinion(BaseModel):
+    """The local classifier's category next to the LLM's (free, ~1 ms, no API)."""
+    category: Category
+    confidence: float
+
+
 class Result(BaseModel):
     ticket: Ticket
     triage: Triage
+    ml: MLOpinion | None = None
     verdict: DisputeVerdict | None = None
     route: Route
     draft_reply: str

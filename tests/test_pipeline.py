@@ -60,3 +60,19 @@ def test_result_saved_and_approve_marks_edited(conn):
 def test_unknown_client_raises_keyerror(conn):
     with pytest.raises(KeyError):
         run(conn, make_triage(), client_id="C-99")
+
+
+def test_llm_failure_falls_back_to_local_model(conn):
+    from leaddesk import llm
+    result = process_ticket(make_ticket(subject="Cancel", body="Please cancel my account at the end of this month."), conn,
+                            triage_fn=lambda text, client: llm.FALLBACK_TRIAGE, draft_fn=lambda *a: "d", monday_fn=lambda r: None)
+    assert result.triage.category == "cancellation"  # local model, not the "other" placeholder
+    assert result.ml.category == "cancellation"
+    assert result.route.queue == "human_review"  # a fallback guess never skips review
+
+
+def test_local_model_opinion_recorded_next_to_llm(conn):
+    result = process_ticket(make_ticket(subject="Invoice", body="I was charged twice for November."), conn,
+                            triage_fn=lambda text, client: make_triage(category="billing"), draft_fn=lambda *a: "d",
+                            monday_fn=lambda r: None)
+    assert result.triage.category == "billing" and result.ml.category == "billing"

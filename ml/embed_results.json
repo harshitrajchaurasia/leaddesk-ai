@@ -1,0 +1,57 @@
+{
+ "BAAI/bge-base-en-v1.5": {
+  "core": {
+   "acc": 0.95,
+   "ms_per_ticket": 3.4,
+   "misses": [
+    "T-024: expected campaign_change, got other",
+    "T-025: expected campaign_change, got lead_quality"
+   ]
+  },
+  "hard": {
+   "acc": 0.833,
+   "ms_per_ticket": 2.77,
+   "misses": [
+    "H-04: expected billing, got other",
+    "H-05: expected lead_quality, got other",
+    "H-07: expected campaign_change, got other"
+   ]
+  }
+ },
+ "intfloat/multilingual-e5-base": {
+  "core": {
+   "acc": 0.95,
+   "ms_per_ticket": 2.98,
+   "misses": [
+    "T-025: expected campaign_change, got lead_quality",
+    "T-037: expected cancellation, got lead_quality"
+   ]
+  },
+  "hard": {
+   "acc": 1.0,
+   "ms_per_ticket": 3.06,
+   "misses": []
+  }
+ },
+ "BAAI/bge-m3": {
+  "core": {
+   "acc": 0.85,
+   "ms_per_ticket": 7.54,
+   "misses": [
+    "T-011: expected lead_quality, got other",
+    "T-012: expected lead_quality, got other",
+    "T-021: expected billing, got other",
+    "T-024: expected campaign_change, got other",
+    "T-025: expected campaign_change, got lead_quality",
+    "T-037: expected cancellation, got lead_quality"
+   ]
+  },
+  "hard": {
+   "acc": 0.944,
+   "ms_per_ticket": 8.92,
+   "misses": [
+    "H-07: expected campaign_change, got other"
+   ]
+  }
+ }
+}

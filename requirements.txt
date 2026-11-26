@@ -7,3 +7,5 @@ uvicorn
 httpx
 python-dotenv
 pytest
+scikit-learn==1.9.1  # models/triage_clf.joblib is a pickle from this version
+joblib==1.6.0

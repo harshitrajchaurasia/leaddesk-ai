@@ -12,12 +12,13 @@ export interface Triage {
   churn_risk: number; lead_id: string | null; summary: string; confidence: number;
 }
 export interface Result {
-  ticket: Ticket; triage: Triage; verdict: { verdict: Verdict; reasons: string[] } | null;
+  ticket: Ticket; triage: Triage; ml?: { category: Category; confidence: number } | null; verdict: { verdict: Verdict; reasons: string[] } | null;
   route: { queue: Queue; priority: Urgency; assignee: string | null; reasons: string[] };
   draft_reply: string; provider: string; latency_ms: number; monday_item_id: string | null; status: Status; final_reply: string | null;
 }
 export interface Bootstrap { provider: string; has_claude: boolean; clients: Client[]; samples: Ticket[] }
 export type Compare = Record<"claude" | "grok", { triage: Triage; ms: number } | null>;
+export interface Usage { app: Record<string, { calls: number; usd: number; avg_ms: number }>; other_usd: number }
 export type EvalRow = Record<string, string | number | null>;
 
 export class Unauthorized extends Error {}
