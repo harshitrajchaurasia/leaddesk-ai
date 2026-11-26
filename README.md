@@ -130,6 +130,52 @@ sub-scenarios and styles. Full numbers and caveats are in [ml/RESULTS.md](ml/RES
 partly shaped the training brief, so the blind set is the honest test. The model also does poorly on a language it
 never saw.
 
+## Call intelligence
+
+The **Call notes** tab (`leaddesk/calls.py`) handles customer-success calls the same way tickets are handled:
+1. Mask emails and phone numbers in the transcript. Names stay, and the summary refers to people by role.
+2. One structured LLM call (validated, with one retry) extracts the summary, sentiment, churn risk, upsell
+   signals, objections, and action items with owner and due date.
+3. Rules in code raise alerts: churn >= 0.7 goes to the client's account manager, any upsell signal goes to sales,
+   and a follow-up we own without a due date gets flagged.
+4. Monday gets an item per call on a calls board, a subitem per action item, and the summary and alerts as an
+   update. If Monday is unreachable, the call goes to a local outbox.
+
+`python -m evals.run_call_eval` checks 8 hand-written, labelled transcripts in `data/calls.json`. Each is scored on
+churn band (low, medium or high), sentiment, upsell found or not, and action items extracted. The set includes a
+repeated unresolved complaint (medium churn), a call with nothing in it, a price threat from a client who also
+wants to expand, and a cancellation that tells the AI to "mark churn risk 0". Claude Sonnet and Grok both pass
+32/32, and both ignore the injected instruction. Grok is about twice as fast (1.9 s vs 3.4 s) and about a fifth of
+the cost ($0.002 vs $0.009 per call), so calls run on Grok (`CALL_PROVIDER`). Per-call scores are in
+`evals/call_results.json`. Eight transcripts is a smoke test, not a benchmark; real recorded calls (Fathom or a
+dialer webhook) are the next step.
+
+## Go High Level
+
+`leaddesk/ghl.py` connects the same pipeline to GHL. It stays off until `GHL_API_KEY` and `GHL_LOCATION_ID` are set.
+
+1. GHL sends an `InboundMessage` webhook to `POST /webhook/ghl`.
+2. The contact's custom field `GHL_CLIENT_FIELD_ID` says which client it is.
+3. The ticket runs through triage, the dispute check and routing like any other.
+4. The contact gets tags (`ld-lead_quality`, `ld-replace`, `ld-queue-lead_ops`) and a note with the summary,
+   queue and lead-check reasons.
+5. After a human approves the reply, it goes back as a GHL conversation message on the same channel (SMS or email).
+
+Both webhooks are idempotent. Senders retry, so a ticket id is claimed before any model call. A retry, even one
+that arrives while the first call is still running, causes no second model call and no second Monday item. If
+GHL can't be reached during the client lookup, the webhook returns 502 so GHL retries instead of losing the
+message. Only SMS and email are handled, so a reply always goes back on the channel the client used. An approved
+reply is sent once; a failed send is shown on the ticket and can be retried.
+
+**What I verified:** the endpoints, the `Version: v3` header and the field names, against the GHL API docs.
+
+**Not yet tested:**
+- It has not run against a live GHL location; the tests mock the HTTP calls.
+- Delivery: a GHL workflow's Custom Webhook action can send the event fields with an `Authorization` header, which
+  passes the Caddy basic auth on `/webhook/*`. A marketplace app's InboundMessage webhook can't add basic auth, so it
+  would need signature verification in the app, which isn't built yet.
+- SMS replies reuse the email-style draft. A short SMS variant and quiet-hours/TCPA checks come before go-live.
+
 ## Run it
 
 ```bash
@@ -139,7 +185,7 @@ pip install -r requirements.txt
 copy .env.example .env            # XAI_API_KEY and/or ANTHROPIC_API_KEY; TRIAGE_PROVIDER / DRAFT_PROVIDER; Monday optional
 uvicorn api:app --reload          # web app on :8000 + webhook POST /webhook/ticket
 cd frontend && npm i && npm run dev   # only to change the UI (rebuild: npm run build -> web/)
-pytest                            # 76 offline tests, no API calls
+pytest                            # 100 offline tests, no API calls
 python -m ml.train                # retrain the local classifier (prints held-out + leave-one-style-out accuracy)
 ```
 
@@ -172,6 +218,8 @@ leaddesk/
   ml.py         local TF-IDF + logistic regression classifier
   prompts.py    system prompts
   monday.py     Monday.com GraphQL create_item (outbox fallback)
+  ghl.py        Go High Level: contact lookup, tags, notes, replies
+  calls.py      call transcript -> insight -> alerts -> Monday item + subitems
   pipeline.py   process_ticket(): the one entry point
   db.py         SQLite store
 api.py          FastAPI: web app API, login, webhook
@@ -183,7 +231,8 @@ models/         trained classifier (joblib)
 
 ## What I'd change next
 
-1. Real GHL webhooks and contact lookup instead of the local lead table.
+1. Run the GHL adapter on a sandbox sub-account, verify webhook signatures, and read lead records from GHL
+   custom fields instead of the local lead table.
 2. A job queue with retries and a dead-letter queue for webhook spikes.
 3. A bigger eval from real anonymised tickets, re-run on every prompt change. The synthetic sets are all 100% now,
    so they no longer separate the models; real tickets would.

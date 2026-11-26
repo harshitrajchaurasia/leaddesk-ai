@@ -1,7 +1,7 @@
 import time
 from typing import Literal
 
-from . import db, llm, ml, monday
+from . import db, ghl, llm, ml, monday
 from .dispute import check_lead
 from .models import MLOpinion, Result, Ticket
 from .pii import mask
@@ -43,8 +43,13 @@ def process_ticket(ticket: Ticket, conn, *, provider: Literal["claude", "grok"] 
 
 
 def approve(conn, ticket_id: str, final_reply: str) -> Result:
-    result = next(r for r in db.list_results(conn) if r.ticket.id == ticket_id)
+    result = db.get_result(conn, ticket_id)
+    if result is None:
+        raise KeyError(f"unknown ticket {ticket_id}")
     result.final_reply = final_reply
     result.status = "approved" if final_reply.strip() == result.draft_reply.strip() else "edited"
+    if result.ticket.ghl_contact_id and ghl.enabled() and not result.ghl_message_id:  # never text a contact twice
+        result.ghl_message_id = ghl.send_reply(result, final_reply)
+        result.send_error = None if result.ghl_message_id else "GHL send failed: approve again to retry, or reply in GHL"
     db.save_result(conn, result)
     return result

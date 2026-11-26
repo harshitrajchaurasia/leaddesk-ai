@@ -1,19 +1,21 @@
-import { BarChart3, Inbox as InboxIcon, LogOut, PlusCircle, ShieldCheck, Sparkles, SplitSquareHorizontal } from "lucide-react";
+import { BarChart3, Inbox as InboxIcon, LogOut, PhoneCall, PlusCircle, ShieldCheck, Sparkles, SplitSquareHorizontal } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { api, blankTicket, label, Unauthorized, type Bootstrap, type EvalRow, type Result, type Ticket, type Usage } from "./lib";
 import Login from "./Login";
 import { cx, Logo } from "./ui";
+import Calls from "./views/Calls";
 import Compare from "./views/Compare";
 import Inbox from "./views/Inbox";
 import Metrics from "./views/Metrics";
 import NewTicket from "./views/NewTicket";
 
-export type View = "new" | "inbox" | "compare" | "metrics";
+export type View = "new" | "inbox" | "calls" | "compare" | "metrics";
 const NAV: { id: View; label: string; sub: string; icon: typeof PlusCircle }[] = [
   { id: "new", label: "New ticket", sub: "Triage, dispute check, routing and a drafted reply", icon: PlusCircle },
   { id: "inbox", label: "Inbox", sub: "Every processed ticket and its approval status", icon: InboxIcon },
+  { id: "calls", label: "Call notes", sub: "Customer-success calls: summary, churn, upsell and action items to Monday", icon: PhoneCall },
   { id: "compare", label: "Model comparison", sub: "The same ticket triaged by Claude and Grok", icon: SplitSquareHorizontal },
   { id: "metrics", label: "Metrics", sub: "Throughput, human review rate and eval accuracy", icon: BarChart3 },
 ];
@@ -122,6 +124,7 @@ export default function App() {
             <motion.div key={view} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}>
               {view === "new" && <NewTicket boot={boot} ticket={ticket} setTicket={setTicket} result={current} setResult={setCurrent} guard={guard} onSaved={refresh} />}
               {view === "inbox" && <Inbox results={results} clients={boot.clients} onOpen={open} />}
+              {view === "calls" && <Calls boot={boot} guard={guard} />}
               {view === "compare" && <Compare boot={boot} ticket={ticket} setTicket={setTicket} guard={guard} />}
               {view === "metrics" && <Metrics results={results} evals={evals} usage={usage} />}
             </motion.div>

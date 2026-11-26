@@ -19,6 +19,11 @@ export interface Result {
 export interface Bootstrap { provider: string; has_claude: boolean; clients: Client[]; samples: Ticket[] }
 export type Compare = Record<"claude" | "grok", { triage: Triage; ms: number } | null>;
 export interface Usage { app: Record<string, { calls: number; usd: number; avg_ms: number }>; other_usd: number }
+export interface CallResult {
+  id: string; client_id: string; transcript: string; alerts: string[]; provider: string; latency_ms: number; monday_item_id: string | null;
+  insight: { summary: string; sentiment: string; churn_risk: number; upsell_signals: string[]; objections: string[];
+    action_items: { owner: "us" | "client"; task: string; due: string | null }[] };
+}
 export type EvalRow = Record<string, string | number | null>;
 
 export class Unauthorized extends Error {}

@@ -2,13 +2,15 @@ import json
 import sqlite3
 from pathlib import Path
 
-from .models import Client, Lead, Result
+from .models import CallResult, Client, Lead, Result
 
 # ponytail: JSON blobs keyed by id; normalise columns if we ever query by field
 SCHEMA = """
 create table if not exists clients (id text primary key, data text not null);
 create table if not exists leads (id text primary key, data text not null);
 create table if not exists results (ticket_id text primary key, created_at text default current_timestamp, data text not null);
+create table if not exists webhook_claims (id text primary key, at text default current_timestamp);
+create table if not exists calls (id text primary key, created_at text default current_timestamp, data text not null);
 """
 
 
@@ -54,6 +56,34 @@ def save_result(conn, result: Result) -> None:
     conn.commit()
 
 
+def get_result(conn, ticket_id: str) -> Result | None:
+    row = conn.execute("select data from results where ticket_id = ?", (ticket_id,)).fetchone()
+    return Result.model_validate_json(row[0]) if row else None
+
+
 def list_results(conn) -> list[Result]:
     rows = conn.execute("select data from results order by created_at desc, rowid desc")
     return [Result.model_validate_json(r[0]) for r in rows]
+
+
+def save_call(conn, result: CallResult) -> None:
+    conn.execute("insert into calls (id, data) values (?, ?) on conflict(id) do update set data = excluded.data",
+                 (result.id, result.model_dump_json()))
+    conn.commit()
+
+
+def list_calls(conn) -> list[CallResult]:
+    rows = conn.execute("select data from calls order by created_at desc, rowid desc")
+    return [CallResult.model_validate_json(r[0]) for r in rows]
+
+
+def claim(conn, ticket_id: str) -> bool:
+    """True for the first caller only (webhook idempotency across concurrent retries)."""
+    cur = conn.execute("insert or ignore into webhook_claims (id) values (?)", (ticket_id,))
+    conn.commit()
+    return cur.rowcount == 1
+
+
+def release(conn, ticket_id: str) -> None:
+    conn.execute("delete from webhook_claims where id = ?", (ticket_id,))
+    conn.commit()

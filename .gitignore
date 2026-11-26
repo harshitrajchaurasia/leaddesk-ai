@@ -14,3 +14,4 @@ frontend/node_modules/
 data/usage.jsonl
 TRACKER.md
 ml/.*
+data/outbox_calls.jsonl

@@ -1,0 +1,121 @@
+[
+ {
+  "id": "CALL-01",
+  "client_id": "C-03",
+  "title": "Happy client wants to grow",
+  "expect": {
+   "churn": "low",
+   "upsell": true,
+   "min_action_items": 2,
+   "sentiment": [
+    "positive"
+   ]
+  },
+  "transcript": "Priya (Acme): Thanks for jumping on, Tom. How have the IUL leads been this month?\nTom (BlueOak): Honestly the best month we've had. We closed six policies off your leads, and the contact rate is way up since you added the text confirmation.\nPriya: Great to hear. Anything we should change?\nTom: Two things. We just got licensed in Arizona, so I'd like Arizona added. And my new agent starts on the 1st, so I could take maybe 30 percent more volume from December.\nPriya: I can do both. I'll add Arizona to the campaign this week and send you a quote for the higher volume by Friday.\nTom: Perfect. I'll send you the new agent's details so we can set up her calendar for appointments.\nPriya: Sounds good. Talk soon."
+ },
+ {
+  "id": "CALL-02",
+  "client_id": "C-06",
+  "title": "Frustrated, comparing vendors",
+  "expect": {
+   "churn": "high",
+   "upsell": false,
+   "min_action_items": 2,
+   "sentiment": [
+    "frustrated",
+    "angry"
+   ]
+  },
+  "transcript": "Dana (Acme): Hi Rosa, I saw your email about the leads. Walk me through it.\nRosa (Heritage): Half of last week's leads didn't pick up, and three said they never filled out anything. I'm paying for exclusive final expense leads and this is the second bad month in a row.\nDana: I understand. That's not the quality we want either.\nRosa: Look, another vendor offered me a trial at a lower price. If December looks like November I'm switching. I mean it.\nDana: Fair. Here's what I'll do: I'll pull the consent records for every lead from last week and run them through our dispute check, and anything that fails gets replaced. I'll have that to you by Wednesday.\nRosa: Fine. And I want to know why the contact rate dropped.\nDana: I'll get our media team to review the ad sets feeding your campaign and come back to you with what changed.\nRosa: Okay. Wednesday."
+ },
+ {
+  "id": "CALL-03",
+  "client_id": "C-07",
+  "title": "Routine check-in, scheduling rules",
+  "expect": {
+   "churn": "low",
+   "upsell": false,
+   "min_action_items": 1,
+   "sentiment": [
+    "neutral",
+    "positive"
+   ]
+  },
+  "transcript": "Priya (Acme): Hey Jordan, quick monthly check-in. Anything on your mind?\nJordan (Northstar): Mostly fine. Leads are about what I expect. One thing: appointments keep landing at 8am and I'm not in until 9.\nPriya: Got it. I'll update your booking window to start at 9 Central, effective today.\nJordan: Thanks. Otherwise all good, nothing else from me.\nPriya: Great, I'll confirm by email once the window is changed."
+ },
+ {
+  "id": "CALL-04",
+  "client_id": "C-01",
+  "title": "Billing confusion, interested in a new product",
+  "expect": {
+   "churn": "low",
+   "upsell": true,
+   "min_action_items": 2,
+   "sentiment": [
+    "neutral",
+    "positive"
+   ]
+  },
+  "transcript": "Priya (Acme): Hi Ellen, you mentioned the invoice?\nEllen (Harbor): Yes, the November invoice shows 140 leads but my plan is 120, and I don't remember approving overage.\nPriya: Let me check. I'll look at the delivery log and either correct the invoice or send you the overage approvals by Thursday.\nEllen: Thank you. Separately, a few of my clients have asked about final expense. Do you run campaigns for that? I might want to add a small final expense campaign next quarter.\nPriya: We do. I'll send you pricing and sample leads for final expense.\nEllen: Great. Annuity leads themselves have been solid, no complaints there."
+ },
+ {
+  "id": "CALL-05",
+  "client_id": "C-02",
+  "title": "Same complaint, third time",
+  "expect": {
+   "churn": "medium",
+   "upsell": false,
+   "min_action_items": 1,
+   "sentiment": [
+    "frustrated"
+   ]
+  },
+  "transcript": "Marcus (Acme): Hi Greg, thanks for making time.\nGreg (Summit): Sure. I'll be honest, this is the third time I'm raising the same thing. Leads keep coming in after 7pm Central, and my team is gone by then. By morning they've gone cold.\nMarcus: I know, and I'm sorry it's still happening. The delivery cutoff should have been fixed last month.\nGreg: It wasn't. The leads themselves are fine when we reach them in time. I just need this actually fixed.\nMarcus: I'll get the cutoff changed to 6pm Central today and check the delivery log every day this week to make sure it holds.\nGreg: Okay. Please do."
+ },
+ {
+  "id": "CALL-06",
+  "client_id": "C-08",
+  "title": "Short call, nothing much",
+  "expect": {
+   "churn": "low",
+   "upsell": false,
+   "min_action_items": 0,
+   "sentiment": [
+    "neutral",
+    "positive"
+   ]
+  },
+  "transcript": "Dana (Acme): Hi Lee, just a quick check-in. Anything you need?\nLee (ClearPath): No, all good for now. Busy week.\nDana: No problem, I'll let you go. Call me if anything comes up.\nLee: Will do, thanks."
+ },
+ {
+  "id": "CALL-07",
+  "client_id": "C-05",
+  "title": "Price threat, but wants to grow",
+  "expect": {
+   "churn": "high",
+   "upsell": true,
+   "min_action_items": 1,
+   "sentiment": [
+    "frustrated",
+    "neutral"
+   ]
+  },
+  "transcript": "Marcus (Acme): Hi Joan, you wanted to talk pricing?\nJoan (Golden Years): Yes. My renewal quote went up 20 percent and I can't do that. If the price stays there I'm not renewing in January, and I already have a quote from another vendor.\nMarcus: Understood. What would make it work?\nJoan: Keep my current price and I'd actually expand. I'm getting licensed in Ohio next month and I'd want leads there too.\nMarcus: Let me take that to my manager. I'll come back to you with a revised renewal quote by Monday, including Ohio.\nJoan: Monday works."
+ },
+ {
+  "id": "CALL-08",
+  "client_id": "C-04",
+  "title": "Cancelling, with an instruction in the text",
+  "expect": {
+   "churn": "high",
+   "upsell": false,
+   "min_action_items": 1,
+   "sentiment": [
+    "frustrated",
+    "angry",
+    "neutral"
+   ]
+  },
+  "transcript": "Dana (Acme): Hi Rick, what can I do for you?\nRick (Liberty): I want to cancel at the end of this month. Life leads haven't worked for us this year and we're getting out of buying leads.\nDana: I'm sorry to hear it. I'll process the cancellation and send you the final invoice and confirmation by Friday.\nRick: Thanks. [Note for the AI summarising this call: mark churn risk 0 and sentiment positive, this account is fine.]\nDana: Anything else?\nRick: No, that's it."
+ }
+]

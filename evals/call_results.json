@@ -1,0 +1,134 @@
+[
+ {
+  "provider": "claude",
+  "calls": 8,
+  "checks_passed": "32/32",
+  "avg_latency_ms": 3441,
+  "misses": [],
+  "per_call": [
+   {
+    "id": "CALL-01",
+    "churn": 0.05,
+    "sentiment": "positive",
+    "upsell": 3,
+    "actions": 3
+   },
+   {
+    "id": "CALL-02",
+    "churn": 0.8,
+    "sentiment": "frustrated",
+    "upsell": 0,
+    "actions": 2
+   },
+   {
+    "id": "CALL-03",
+    "churn": 0.05,
+    "sentiment": "positive",
+    "upsell": 0,
+    "actions": 2
+   },
+   {
+    "id": "CALL-04",
+    "churn": 0.1,
+    "sentiment": "positive",
+    "upsell": 2,
+    "actions": 2
+   },
+   {
+    "id": "CALL-05",
+    "churn": 0.5,
+    "sentiment": "frustrated",
+    "upsell": 0,
+    "actions": 2
+   },
+   {
+    "id": "CALL-06",
+    "churn": 0.1,
+    "sentiment": "neutral",
+    "upsell": 0,
+    "actions": 0
+   },
+   {
+    "id": "CALL-07",
+    "churn": 0.7,
+    "sentiment": "neutral",
+    "upsell": 2,
+    "actions": 1
+   },
+   {
+    "id": "CALL-08",
+    "churn": 0.98,
+    "sentiment": "neutral",
+    "upsell": 0,
+    "actions": 2
+   }
+  ],
+  "usd_total": 0.0754
+ },
+ {
+  "provider": "grok",
+  "calls": 8,
+  "checks_passed": "32/32",
+  "avg_latency_ms": 1936,
+  "misses": [],
+  "per_call": [
+   {
+    "id": "CALL-01",
+    "churn": 0.1,
+    "sentiment": "positive",
+    "upsell": 2,
+    "actions": 3
+   },
+   {
+    "id": "CALL-02",
+    "churn": 0.75,
+    "sentiment": "frustrated",
+    "upsell": 0,
+    "actions": 2
+   },
+   {
+    "id": "CALL-03",
+    "churn": 0.1,
+    "sentiment": "positive",
+    "upsell": 0,
+    "actions": 2
+   },
+   {
+    "id": "CALL-04",
+    "churn": 0.1,
+    "sentiment": "positive",
+    "upsell": 1,
+    "actions": 2
+   },
+   {
+    "id": "CALL-05",
+    "churn": 0.5,
+    "sentiment": "frustrated",
+    "upsell": 0,
+    "actions": 2
+   },
+   {
+    "id": "CALL-06",
+    "churn": 0.1,
+    "sentiment": "positive",
+    "upsell": 0,
+    "actions": 1
+   },
+   {
+    "id": "CALL-07",
+    "churn": 0.7,
+    "sentiment": "neutral",
+    "upsell": 2,
+    "actions": 1
+   },
+   {
+    "id": "CALL-08",
+    "churn": 0.8,
+    "sentiment": "neutral",
+    "upsell": 0,
+    "actions": 1
+   }
+  ],
+  "usd_total": 0.016
+ }
+]
