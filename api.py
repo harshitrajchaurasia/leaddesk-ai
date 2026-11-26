@@ -11,9 +11,9 @@ from dotenv import load_dotenv
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from leaddesk import db, llm
+from leaddesk import calls, db, ghl, llm
 from leaddesk.models import Ticket
 from leaddesk.pii import mask
 from leaddesk.pipeline import approve, process_ticket
@@ -23,6 +23,7 @@ app = FastAPI(title="LeadDesk AI")
 conn = db.connect()
 db.seed(conn)
 WEB = Path(__file__).parent / "web"
+CALL_SAMPLES = Path(__file__).parent / "data" / "calls.json"
 COOKIE = "ld_session"
 log = logging.getLogger("uvicorn.error")  # shows up in journalctl next to the access log
 
@@ -138,6 +139,27 @@ def process(ticket: Ticket):
         raise HTTPException(status_code=404, detail=str(e))
 
 
+class CallIn(BaseModel):
+    client_id: str
+    transcript: str = Field(min_length=20, max_length=60000)
+
+
+@app.get("/api/calls", dependencies=api)
+def list_calls():
+    samples = [{k: c[k] for k in ("id", "client_id", "title", "transcript")} for c in json.loads(CALL_SAMPLES.read_text())]
+    return {"samples": samples, "results": [c.model_dump(mode="json") for c in db.list_calls(conn)]}
+
+
+@app.post("/api/call", dependencies=api)
+def analyse_call(body: CallIn):
+    try:
+        return calls.process_call(f"CALL-{int(time.time() * 1000)}", body.client_id, body.transcript, conn).model_dump(mode="json")
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except calls.ModelUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 class Approval(BaseModel):
     ticket_id: str
     final_reply: str
@@ -147,7 +169,7 @@ class Approval(BaseModel):
 def approve_reply(body: Approval):
     try:
         return approve(conn, body.ticket_id, body.final_reply).model_dump(mode="json")
-    except StopIteration:
+    except KeyError:
         raise HTTPException(status_code=404, detail="ticket not found")
 
 
@@ -198,11 +220,63 @@ def health():
     return {"ok": True}
 
 
-@app.post("/webhook/ticket")
-def webhook_ticket(ticket: Ticket):
+def _summary(r, duplicate=False) -> dict:
+    return {"ticket_id": r.ticket.id, "queue": r.route.queue, "verdict": r.verdict.verdict if r.verdict else None,
+            "monday_item_id": r.monday_item_id, "duplicate": duplicate}
+
+
+def _once(ticket: Ticket, after=None) -> dict:
+    """Process a webhook ticket at most once. Senders retry, and a retry can arrive while the first call is still
+    running, so the id is claimed before any model call; a failed run releases it so the next retry works."""
+    if (done := db.get_result(conn, ticket.id)) is not None:
+        return _summary(done, duplicate=True)
+    if not db.claim(conn, ticket.id):
+        return {"ticket_id": ticket.id, "duplicate": True, "processing": True}
     try:
         r = process_ticket(ticket, conn)
     except KeyError as e:
+        db.release(conn, ticket.id)
         raise HTTPException(status_code=404, detail=str(e))
-    return {"ticket_id": r.ticket.id, "queue": r.route.queue, "verdict": r.verdict.verdict if r.verdict else None,
-            "monday_item_id": r.monday_item_id}
+    except Exception:
+        db.release(conn, ticket.id)
+        raise
+    if after:
+        after(r)
+    return _summary(r)
+
+
+@app.post("/webhook/ticket")
+def webhook_ticket(ticket: Ticket):
+    return _once(ticket)
+
+
+class GhlEvent(BaseModel):
+    """The fields we use from GHL's InboundMessage event (marketplace.gohighlevel.com/docs/webhook/InboundMessage)."""
+    type: str
+    contactId: str
+    conversationId: str
+    messageId: str | None = None
+    messageType: str | None = None
+    direction: str = "inbound"
+    body: str | None = None
+    subject: str | None = None
+    dateAdded: str | None = None
+
+
+@app.post("/webhook/ghl")
+def webhook_ghl(event: GhlEvent):
+    """Go High Level InboundMessage -> same pipeline, then tags + a note on the contact."""
+    if not ghl.enabled():
+        raise HTTPException(status_code=503, detail="GHL not configured")
+    if event.type != "InboundMessage" or event.direction != "inbound" or not (event.body or "").strip():
+        return {"ignored": "not an inbound message with text"}
+    if event.messageType not in ("SMS", "Email"):
+        return {"ignored": f"{event.messageType} messages are not handled (replies go out only as SMS or email)"}
+    try:
+        client_id = ghl.client_for_contact(event.contactId)
+    except ghl.GhlError as e:
+        raise HTTPException(status_code=502, detail=str(e))  # non-2xx so GHL retries instead of dropping it
+    if client_id is None:
+        return {"ignored": "contact is not linked to a client (custom field GHL_CLIENT_FIELD_ID)"}
+    ticket = ghl.ticket_from_event(event.model_dump(), client_id)
+    return _once(ticket, after=ghl.write_back)

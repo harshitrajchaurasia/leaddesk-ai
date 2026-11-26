@@ -12,6 +12,8 @@ DATA_DIR = str(Path(__file__).parent.parent / "data")
 @pytest.fixture(autouse=True)
 def _usage_log(tmp_path, monkeypatch):
     monkeypatch.setattr(llm, "USAGE_PATH", str(tmp_path / "usage.jsonl"))
+    for k in ("MONDAY_API_TOKEN", "MONDAY_BOARD_ID", "MONDAY_CALLS_BOARD_ID", "GHL_API_KEY", "GHL_LOCATION_ID"):
+        monkeypatch.delenv(k, raising=False)  # api.py loads .env: tests must never reach real Monday/GHL
 
 
 @pytest.fixture

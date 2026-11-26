@@ -76,3 +76,29 @@ def test_local_model_opinion_recorded_next_to_llm(conn):
                             triage_fn=lambda text, client: make_triage(category="billing"), draft_fn=lambda *a: "d",
                             monday_fn=lambda r: None)
     assert result.triage.category == "billing" and result.ml.category == "billing"
+
+
+def test_approved_reply_goes_back_through_ghl(conn, monkeypatch):
+    from leaddesk import ghl
+    monkeypatch.setenv("GHL_API_KEY", "k")
+    monkeypatch.setenv("GHL_LOCATION_ID", "loc")
+    sent = []
+    monkeypatch.setattr(ghl, "send_reply", lambda r, text: sent.append((r.ticket.ghl_contact_id, text)) or "msg1")
+    process_ticket(make_ticket(id="GHL-m1", ghl_contact_id="ct1"), conn, triage_fn=lambda t, c: make_triage(),
+                   draft_fn=lambda *a: "draft", monday_fn=lambda r: None)
+    approve(conn, "GHL-m1", "final text")
+    approve(conn, "GHL-m1", "final text")  # double click
+    assert sent == [("ct1", "final text")]
+
+
+def test_failed_ghl_send_is_visible_and_retried(conn, monkeypatch):
+    from leaddesk import ghl
+    monkeypatch.setenv("GHL_API_KEY", "k")
+    monkeypatch.setenv("GHL_LOCATION_ID", "loc")
+    replies = iter([None, "msg2"])
+    monkeypatch.setattr(ghl, "send_reply", lambda r, text: next(replies))
+    process_ticket(make_ticket(id="GHL-m2", ghl_contact_id="ct1"), conn, triage_fn=lambda t, c: make_triage(),
+                   draft_fn=lambda *a: "draft", monday_fn=lambda r: None)
+    assert approve(conn, "GHL-m2", "draft").send_error
+    r = approve(conn, "GHL-m2", "draft")
+    assert r.ghl_message_id == "msg2" and r.send_error is None
