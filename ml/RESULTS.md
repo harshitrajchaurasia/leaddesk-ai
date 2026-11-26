@@ -17,7 +17,9 @@ not in the training data. Metric: category accuracy.
   (appointments or tech access?), or "cancelling because the leads are bad" (cancellation or lead quality?).
   The training set is now 1,373 rows, 160-271 per category, with class weights balanced.
 - Any generated ticket with TF-IDF cosine >= 0.6 to an eval ticket is dropped. `python -m ml.train` prints how close
-  each eval set's nearest training row is. On word TF-IDF the closest is 0.60 (core), 0.53 (hard) and 0.54 (blind).
+  each eval set's nearest training row is. On word TF-IDF the closest rows are 0.601 for core (a v1 row that is a paraphrase, not a copy),
+  0.53 for hard and 0.54 for blind. The filter scored with the vectorizer fitted when the data was generated, and
+  refitting on the full set moves scores slightly, so one row now sits just over the 0.6 line.
 - Training text is PII-masked, the same way the app masks a ticket before the model sees it.
 
 ## Results (held-out)

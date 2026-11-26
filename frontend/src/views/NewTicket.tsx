@@ -140,7 +140,7 @@ export default function NewTicket({ boot, ticket, setTicket, result, setResult, 
 
               <Card className="p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div><div className="eyebrow">Drafted reply</div><p className="mt-0.5 text-xs text-slate-500">Edit if needed. Nothing is sent automatically.</p></div>
+                  <div><div className="eyebrow">Drafted reply</div><p className="mt-0.5 text-xs text-slate-500">{r.ticket.ghl_contact_id ? "From Go High Level: on approval it is sent to the contact once, on the same channel." : "Edit if needed. Nothing is sent automatically."}</p></div>
                   <StatusBadge s={r.status} />
                 </div>
                 <textarea className="field mt-3 min-h-44 leading-relaxed" value={reply} onChange={(e) => setReply(e.target.value)} disabled={r.status !== "pending_approval"} />
@@ -148,10 +148,12 @@ export default function NewTicket({ boot, ticket, setTicket, result, setResult, 
                   <Button variant="ghost" onClick={() => setShowJson(!showJson)} className="px-2">
                     <Code2 className="size-4" />Structured output<ChevronDown className={cx("size-4 transition", showJson && "rotate-180")} />
                   </Button>
-                  <Button variant="success" onClick={approve} disabled={r.status !== "pending_approval"}>
-                    <Check className="size-4" />{r.status === "pending_approval" ? "Approve reply" : "Approved"}
+                  <Button variant="success" onClick={approve} disabled={r.status !== "pending_approval" && !r.send_error}>
+                    <Check className="size-4" />{r.send_error ? "Retry send" : r.status === "pending_approval" ? "Approve reply" : "Approved"}
                   </Button>
                 </div>
+                {r.send_error && <p className="mt-2 text-sm text-rose-600">{r.send_error}</p>}
+                {r.ghl_message_id && <p className="mt-2 text-xs text-slate-500">Sent through Go High Level · message {r.ghl_message_id}</p>}
                 <AnimatePresence>
                   {showJson && (
                     <motion.pre initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
