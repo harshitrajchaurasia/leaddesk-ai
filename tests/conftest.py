@@ -30,7 +30,7 @@ def annuity_client():
 
 
 def make_triage(**kw) -> Triage:
-    base = dict(category="billing", urgency="normal", sentiment="neutral", churn_risk=0.1, lead_id=None,
+    base = dict(category="billing", urgency="normal", sentiment="neutral", churn_risk=0.1, lead_id=None, lead_ids=[],
                 summary="test", confidence=0.9)
     return Triage(**{**base, **kw})
 

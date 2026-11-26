@@ -9,7 +9,7 @@ export interface Client { id: string; name: string; vertical: string; states: st
 export interface Ticket { id: string; client_id: string; channel: "email" | "form" | "webhook"; subject: string; body: string; received_at: string; ghl_contact_id?: string | null }
 export interface Triage {
   category: Category; urgency: Urgency; sentiment: "positive" | "neutral" | "frustrated" | "angry";
-  churn_risk: number; lead_id: string | null; summary: string; confidence: number;
+  churn_risk: number; lead_id: string | null; lead_ids?: string[]; summary: string; confidence: number;
 }
 export interface Result {
   ticket: Ticket; triage: Triage; ml?: { category: Category; confidence: number } | null; verdict: { verdict: Verdict; reasons: string[] } | null;

@@ -12,7 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from leaddesk import db, llm, ml
-from leaddesk.dispute import check_lead
+from leaddesk.pipeline import dispute
 from leaddesk.models import LabeledTicket
 from leaddesk.pii import mask
 from leaddesk.routing import route
@@ -30,18 +30,16 @@ SETS = {"core": "data/tickets.json", "hard": "data/tickets_hard.json", "blind": 
 
 def run(provider: str, conn, tickets: list[LabeledTicket], name: str) -> dict:
     fn = {**llm.TRIAGE, "ml": ml.triage}[provider]
-    cats, queues, esc, leads, latencies, fallbacks, misses = [], [], [], [], [], 0, []
+    cats, queues, esc, leads, latencies, fallbacks, misses, multi = [], [], [], [], [], 0, [], []
     usage_start = _usage_lines()
     for t in tickets:
         client = db.get_client(conn, t.client_id)
         start = time.perf_counter()
-        tri = fn(mask(f"{t.subject}\n{t.body}"), client)
+        text = mask(f"{t.subject}\n{t.body}")
+        tri = fn(text, client)
         latencies.append((time.perf_counter() - start) * 1000)
         fallbacks += tri == llm.FALLBACK_TRIAGE
-        verdict = None
-        if tri.category == "lead_quality":
-            lead = db.get_lead(conn, tri.lead_id) if tri.lead_id else None
-            verdict = check_lead(lead if lead and lead.client_id == client.id else None, client, t.received_at)
+        verdict = dispute(tri, client, conn, t.received_at, text)  # same code path as the app
         q = route(tri, verdict, client).queue
         want_cat = t.expected_category if isinstance(t.expected_category, list) else [t.expected_category]
         cats.append((True, tri.category in want_cat))
@@ -53,6 +51,10 @@ def run(provider: str, conn, tickets: list[LabeledTicket], name: str) -> dict:
                 m = re.search(r"\bL-\d+\b", t.body)
                 want = m.group() if m else None
             leads.append((want, tri.lead_id))
+        if t.expected_lead_ids:
+            multi.append((set(t.expected_lead_ids), set(tri.lead_ids)))
+            if set(t.expected_lead_ids) != set(tri.lead_ids):
+                misses.append(f"{t.id}: lead ids expected {t.expected_lead_ids}, got {tri.lead_ids}")
         if t.expected_queue in ESCALATION:
             esc.append((True, q in ESCALATION))
         if tri.category not in want_cat or q != t.expected_queue:
@@ -64,6 +66,7 @@ def run(provider: str, conn, tickets: list[LabeledTicket], name: str) -> dict:
     return {"set": name, "provider": provider, "model": _model(provider), "tickets": len(tickets),
             "category_acc": round(score(cats), 3), "queue_acc": round(score(queues), 3),
             "escalation_recall": round(score(esc), 3), "lead_id_acc": round(score(leads), 3),
+            "multi_lead_ids": f"{sum(a == b for a, b in multi)}/{len(multi)}" if multi else None,
             "avg_latency_ms": int(sum(latencies) / len(latencies)), "fallbacks": fallbacks,
             "usd_per_ticket": round(usd / len(tickets), 5), "misses": misses}
 
