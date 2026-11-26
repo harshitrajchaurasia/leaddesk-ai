@@ -106,6 +106,7 @@ def login(body: Login, request: Request, response: Response):
         log.warning("login failed ip=%s", ip)  # never log the typed username/password
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     _fails.pop(ip, None)
+    log.info("login ok user=%s ip=%s", body.username, ip)  # who signed in, and when (the password is never logged)
     response.set_cookie(COOKIE, _token(int(now) + SESSION_TTL), httponly=True, secure=True, samesite="lax",
                         max_age=SESSION_TTL)
     return {"ok": True}
