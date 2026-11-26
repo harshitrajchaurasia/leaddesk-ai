@@ -35,7 +35,15 @@ SESSION_TTL = 7 * 86400
 
 def _key() -> bytes:
     # Key derives from the login, so rotating DEMO_PASS signs everyone out.
-    return hashlib.sha256(f"leaddesk:{os.getenv('DEMO_USER', '')}:{os.getenv('DEMO_PASS', '')}".encode()).digest()
+    return hashlib.sha256(f"leaddesk:{os.getenv('DEMO_USER', '')}:{os.getenv('DEMO_PASS', '')}:{os.getenv('EXTRA_LOGINS', '')}".encode()).digest()
+
+
+def _login_ok(username: str, password: str) -> bool:
+    """DEMO_USER/DEMO_PASS, or any "user:pass" in EXTRA_LOGINS (comma separated), e.g. one login per reviewer."""
+    pairs = [(os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", ""))]
+    pairs += [tuple(x.split(":", 1)) for x in os.getenv("EXTRA_LOGINS", "").split(",") if ":" in x]
+    return any(hmac.compare_digest(username.encode(), u.encode()) & hmac.compare_digest(password.encode(), p.encode())
+               for u, p in pairs if p)
 
 
 def _token(expiry: int) -> str:
@@ -89,10 +97,7 @@ def login(body: Login, request: Request, response: Response):
     if _locked(ip, now):
         log.warning("login locked out ip=%s", ip)
         raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
-    user, password = os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", "")
-    ok = hmac.compare_digest(body.username.encode(), user.encode()) & \
-        hmac.compare_digest(body.password.encode(), password.encode())
-    if not ok:
+    if not _login_ok(body.username, body.password):
         _fails.setdefault(ip, []).append(now)
         log.warning("login failed ip=%s", ip)  # never log the typed username/password
         raise HTTPException(status_code=401, detail="Incorrect username or password")

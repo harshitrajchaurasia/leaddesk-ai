@@ -167,3 +167,9 @@ def test_bootstrap_names_call_provider(monkeypatch):
     monkeypatch.setenv("CALL_PROVIDER", "grok")
     b = client.get("/api/bootstrap").json()
     assert b["provider"] == "Grok triage · Claude drafts" and b["call_provider"] == "Grok"
+
+
+def test_extra_logins(monkeypatch):
+    monkeypatch.setenv("DEMO_USER", "demo"); monkeypatch.setenv("DEMO_PASS", "s3cret"); monkeypatch.setenv("EXTRA_LOGINS", "g:q,h:")
+    assert api._login_ok("demo", "s3cret") and api._login_ok("g", "q")
+    assert not api._login_ok("g", "s3cret") and not api._login_ok("h", "") and not api._login_ok("demo", "q")
