@@ -34,16 +34,20 @@ SESSION_TTL = 7 * 86400
 
 
 def _key() -> bytes:
-    # Key derives from the login, so rotating DEMO_PASS signs everyone out.
+    # Key derives from the logins, so changing DEMO_PASS or EXTRA_LOGINS signs everyone out.
     return hashlib.sha256(f"leaddesk:{os.getenv('DEMO_USER', '')}:{os.getenv('DEMO_PASS', '')}:{os.getenv('EXTRA_LOGINS', '')}".encode()).digest()
 
 
 def _login_ok(username: str, password: str) -> bool:
     """DEMO_USER/DEMO_PASS, or any "user:pass" in EXTRA_LOGINS (comma separated), e.g. one login per reviewer."""
-    pairs = [(os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", ""))]
-    pairs += [tuple(x.split(":", 1)) for x in os.getenv("EXTRA_LOGINS", "").split(",") if ":" in x]
     return any(hmac.compare_digest(username.encode(), u.encode()) & hmac.compare_digest(password.encode(), p.encode())
-               for u, p in pairs if p)
+               for u, p in _logins())
+
+
+def _logins() -> list[tuple[str, str]]:
+    pairs = [(os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", ""))]
+    pairs += [(u.strip(), p.strip()) for u, _, p in (x.partition(":") for x in os.getenv("EXTRA_LOGINS", "").split(","))]
+    return [(u, p) for u, p in pairs if u and p]
 
 
 def _token(expiry: int) -> str:
@@ -51,7 +55,7 @@ def _token(expiry: int) -> str:
 
 
 def _authed(session: str | None) -> bool:
-    if not os.getenv("DEMO_PASS"):
+    if not _logins():  # no login configured: open, for local dev
         return True
     try:
         expiry = int((session or "").split(".", 1)[0])
