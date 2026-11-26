@@ -209,14 +209,24 @@ GHL can't be reached during the client lookup, the webhook returns 502 so GHL re
 message. Only SMS and email are handled, so a reply always goes back on the channel the client used. An approved
 reply is sent once; a failed send is shown on the ticket and can be retried.
 
-**What I verified:** the endpoints, the `Version: v3` header and the field names, against the GHL API docs.
+**Run live against a GHL trial location (2026-11-26):**
+- An `InboundMessage` event mapped the contact to its client through the custom field.
+- Triage and the lead check gave REPLACE: the lead had been delivered to 3 agents.
+- The contact got the tags `leaddesk`, `ld-lead_quality`, `ld-queue-lead_ops` and `ld-replace`, plus a note with
+  the lead-check reasons.
+- A redelivery of the same message was answered from the stored result.
+- The approved reply arrived in the contact's inbox.
 
-**Not yet tested:**
-- It has not run against a live GHL location; the tests mock the HTTP calls.
-- Delivery: a GHL workflow's Custom Webhook action can send the event fields with an `Authorization` header, which
-  passes the Caddy basic auth on `/webhook/*`. A marketplace app's InboundMessage webhook can't add basic auth, so it
-  would need signature verification in the app, which isn't built yet.
-- SMS replies reuse the email-style draft. A short SMS variant and quiet-hours/TCPA checks come before go-live.
+The first send failed. For email, GHL needs the content in `html`, not `message` (422 "no content"). The ticket
+showed the failure and a Retry button. The fix is tested, and the retry was delivered. Also learned: the contact
+lookup endpoint rejects the older `Version: 2021-07-28`, so `v3` is the default.
+
+**Still open:**
+- Delivery from GHL itself. A workflow's Custom Webhook action can send the event fields with an `Authorization`
+  header, which passes the Caddy basic auth on `/webhook/*`. A marketplace app's webhook can't add basic auth, so it
+  would need signature verification in the app, which isn't built yet. The live test posted the event directly.
+- SMS is untested; the trial has no phone number. SMS replies also reuse the email-style draft, so a short SMS
+  variant and quiet-hours/TCPA checks come before go-live.
 
 ## Run it
 
@@ -275,8 +285,8 @@ models/         trained classifier (joblib)
 
 ## What I'd change next
 
-1. Run the GHL adapter on a sandbox sub-account, verify webhook signatures, and read lead records from GHL
-   custom fields instead of the local lead table.
+1. Point a GHL workflow at `/webhook/ghl`, add webhook signature checks, and read lead records from GHL custom
+   fields instead of the local lead table.
 2. A job queue with retries and a dead-letter queue for webhook spikes.
 3. A bigger eval from real anonymised tickets, re-run on every prompt change. The synthetic sets are all 100% now,
    so they no longer separate the models; real tickets would.

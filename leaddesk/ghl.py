@@ -6,12 +6,13 @@ the contact -> after a human approves, the reply goes out as a GHL conversation 
 Endpoints and field names are taken from marketplace.gohighlevel.com/docs (checked 2026-11-26: contacts/get-contact,
 add-tags, create-note, conversations/send-a-new-message, webhook/InboundMessage). Those pages say "Version: v3" and list
 2021-07-28 / 2023-02-21 as older versions; GHL_API_VERSION overrides it if a location still expects an older one.
-Not yet run against a live GHL location: try it on a sandbox sub-account first.
+Run live against a GHL trial location on 2026-11-26: lookup, tags, notes and an email reply all worked.
 Private Integration scopes needed: contacts.readonly, contacts.write, conversations/message.write.
 """
 import logging
 import os
 from datetime import datetime, timezone
+from html import escape
 
 import requests
 
@@ -79,6 +80,7 @@ def send_reply(result: Result, text: str, *, http=requests.request) -> str | Non
             "message": text, "status": "pending"}
     # ponytail: the docs list `status` as required here; confirm on a sandbox that "pending" still sends (it may be
     # meant for custom-provider messages). Replies are the email-style draft: add a short SMS variant before go-live.
-    if body["type"] == "Email":
+    if body["type"] == "Email":  # verified live: email content must be in `html`; `message` alone -> 422 "no content"
         body["subject"] = f"Re: {result.ticket.subject}"
+        body["html"] = "".join(f"<p>{escape(par).replace(chr(10), '<br>')}</p>" for par in text.split("\n\n"))
     return (_call("POST", "/conversations/messages", http=http, json=body) or {}).get("messageId")
