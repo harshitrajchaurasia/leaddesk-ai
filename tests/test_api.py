@@ -158,3 +158,12 @@ def test_ghl_other_channels_and_bad_payload(monkeypatch):
     _ghl_on(monkeypatch)
     assert "ignored" in client.post("/webhook/ghl", json={**GHL_EVENT, "messageType": "WhatsApp"}).json()
     assert client.post("/webhook/ghl", json={k: v for k, v in GHL_EVENT.items() if k != "contactId"}).status_code == 422
+
+
+def test_bootstrap_names_call_provider(monkeypatch):
+    monkeypatch.delenv("DEMO_PASS", raising=False)
+    monkeypatch.setenv("TRIAGE_PROVIDER", "grok")
+    monkeypatch.setenv("DRAFT_PROVIDER", "claude")
+    monkeypatch.setenv("CALL_PROVIDER", "grok")
+    b = client.get("/api/bootstrap").json()
+    assert b["provider"] == "Grok triage · Claude drafts" and b["call_provider"] == "Grok"

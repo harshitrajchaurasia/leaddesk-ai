@@ -97,7 +97,8 @@ export default function App() {
               <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-500" /></span>
               {label(boot.provider)}
             </div>
-            <div className="mt-1 flex items-center gap-1 text-xs text-slate-500"><ShieldCheck className="size-3.5" />PII masked before every call</div>
+            <div className="mt-1 text-xs text-slate-600">{boot.call_provider} for call notes</div>
+            <div className="mt-1 flex items-center gap-1 text-xs text-slate-500"><ShieldCheck className="size-3.5" />Emails and phones masked before every model call</div>
           </div>
           <button onClick={logout} className="flex w-full items-center gap-2 px-1 text-sm text-slate-500 transition hover:text-slate-900"><LogOut className="size-4" />Sign out</button>
         </div>

@@ -6,7 +6,7 @@ export type Verdict = "REPLACE" | "VALID_COACH" | "NEEDS_REVIEW";
 export type Status = "pending_approval" | "approved" | "edited";
 
 export interface Client { id: string; name: string; vertical: string; states: string[]; plan: string; account_manager: string }
-export interface Ticket { id: string; client_id: string; channel: "email" | "form" | "webhook"; subject: string; body: string; received_at: string }
+export interface Ticket { id: string; client_id: string; channel: "email" | "form" | "webhook"; subject: string; body: string; received_at: string; ghl_contact_id?: string | null }
 export interface Triage {
   category: Category; urgency: Urgency; sentiment: "positive" | "neutral" | "frustrated" | "angry";
   churn_risk: number; lead_id: string | null; summary: string; confidence: number;
@@ -15,8 +15,9 @@ export interface Result {
   ticket: Ticket; triage: Triage; ml?: { category: Category; confidence: number } | null; verdict: { verdict: Verdict; reasons: string[] } | null;
   route: { queue: Queue; priority: Urgency; assignee: string | null; reasons: string[] };
   draft_reply: string; provider: string; latency_ms: number; monday_item_id: string | null; status: Status; final_reply: string | null;
+  ghl_message_id?: string | null; send_error?: string | null;
 }
-export interface Bootstrap { provider: string; has_claude: boolean; clients: Client[]; samples: Ticket[] }
+export interface Bootstrap { provider: string; call_provider: string; has_claude: boolean; clients: Client[]; samples: Ticket[] }
 export type Compare = Record<"claude" | "grok", { triage: Triage; ms: number } | null>;
 export interface Usage { app: Record<string, { calls: number; usd: number; avg_ms: number }>; other_usd: number }
 export interface CallResult {

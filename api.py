@@ -126,7 +126,8 @@ def bootstrap():
     samples = json.loads(Path("data/tickets.json").read_text())
     tp, dp = llm.default_provider("triage"), llm.default_provider("draft")
     name = {"grok": "Grok", "claude": "Claude"}
-    return {"provider": name[tp] if tp == dp else f"{name[tp]} triage · {name[dp]} drafts", "has_claude": bool(os.getenv("ANTHROPIC_API_KEY")),
+    return {"provider": name[tp] if tp == dp else f"{name[tp]} triage · {name[dp]} drafts", "call_provider": name[llm.default_provider("call")],
+            "has_claude": bool(os.getenv("ANTHROPIC_API_KEY")),
             "clients": [c.model_dump() for c in db.list_clients(conn)],
             "samples": [{k: t[k] for k in ("id", "client_id", "channel", "subject", "body", "received_at")} for t in samples]}
 
