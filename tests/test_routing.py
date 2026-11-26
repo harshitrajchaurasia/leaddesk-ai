@@ -53,3 +53,8 @@ def test_mask_phone_formats(phone):
 def test_mask_keeps_lead_ids_and_money():
     text = "Lead L-1042 charged $2,400 on 11/20"
     assert mask(text) == text
+
+
+def test_churn_beats_low_confidence(annuity_client):
+    r = route(make_triage(category="cancellation", confidence=0.6, churn_risk=0.7), None, annuity_client)
+    assert (r.queue, r.priority) == ("account_manager", "urgent")

@@ -119,6 +119,7 @@ export default function NewTicket({ boot, ticket, setTicket, result, setResult, 
                     <div className="space-y-1.5"><Row k="Churn risk" v={pct(r.triage.churn_risk)} />
                       <Meter value={r.triage.churn_risk} tone={r.triage.churn_risk >= 0.7 ? "bg-rose-500" : r.triage.churn_risk >= 0.4 ? "bg-amber-400" : "bg-emerald-500"} /></div>
                     <div className="space-y-1.5"><Row k="Confidence" v={pct(r.triage.confidence)} /><Meter value={r.triage.confidence} /></div>
+                    {r.ml && <Row k="Local model" v={`${label(r.ml.category)} · ${pct(r.ml.confidence)} · ${r.ml.category === r.triage.category ? "agrees" : "disagrees"}`} />}
                   </dl>
                 </Card>
                 <Card className="flex flex-col p-5">

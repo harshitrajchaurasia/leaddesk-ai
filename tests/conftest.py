@@ -3,10 +3,15 @@ from pathlib import Path
 
 import pytest
 
-from leaddesk import db
+from leaddesk import db, llm
 from leaddesk.models import Client, Result, Route, Ticket, Triage
 
 DATA_DIR = str(Path(__file__).parent.parent / "data")
+
+
+@pytest.fixture(autouse=True)
+def _usage_log(tmp_path, monkeypatch):
+    monkeypatch.setattr(llm, "USAGE_PATH", str(tmp_path / "usage.jsonl"))
 
 
 @pytest.fixture

@@ -11,3 +11,6 @@ STATUS.md
 frontend/node_modules/
 *.swp
 *.tsbuildinfo
+data/usage.jsonl
+TRACKER.md
+ml/.*

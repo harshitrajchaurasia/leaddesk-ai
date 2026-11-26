@@ -123,7 +123,9 @@ api = [Depends(require_session)]
 @app.get("/api/bootstrap", dependencies=api)
 def bootstrap():
     samples = json.loads(Path("data/tickets.json").read_text())
-    return {"provider": llm.default_provider(), "has_claude": bool(os.getenv("ANTHROPIC_API_KEY")),
+    tp, dp = llm.default_provider("triage"), llm.default_provider("draft")
+    name = {"grok": "Grok", "claude": "Claude"}
+    return {"provider": name[tp] if tp == dp else f"{name[tp]} triage · {name[dp]} drafts", "has_claude": bool(os.getenv("ANTHROPIC_API_KEY")),
             "clients": [c.model_dump() for c in db.list_clients(conn)],
             "samples": [{k: t[k] for k in ("id", "client_id", "channel", "subject", "body", "received_at")} for t in samples]}
 
@@ -158,6 +160,21 @@ def results():
 def eval_results():
     f = Path("evals/results.json")
     return json.loads(f.read_text()) if f.exists() else []
+
+
+@app.get("/api/usage", dependencies=api)
+def usage():
+    """Model spend from data/usage.jsonl: live tickets ("app") per step, plus everything else (evals, data generation)."""
+    f = Path(llm.USAGE_PATH)
+    rows = [json.loads(line) for line in f.read_text().splitlines()] if f.exists() else []
+    steps: dict[str, dict] = {}
+    for r in (r for r in rows if r["tag"] == "app"):
+        s = steps.setdefault(r["step"], {"calls": 0, "usd": 0.0, "ms": 0})
+        s["calls"] += 1
+        s["usd"] += r["usd"]
+        s["ms"] += r["ms"]
+    return {"app": {k: {"calls": v["calls"], "usd": round(v["usd"], 5), "avg_ms": v["ms"] // v["calls"]} for k, v in steps.items()},
+            "other_usd": round(sum(r["usd"] for r in rows if r["tag"] != "app"), 4)}
 
 
 @app.post("/api/compare", dependencies=api)

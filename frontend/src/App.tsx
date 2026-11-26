@@ -2,7 +2,7 @@ import { BarChart3, Inbox as InboxIcon, LogOut, PlusCircle, ShieldCheck, Sparkle
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
-import { api, blankTicket, label, Unauthorized, type Bootstrap, type EvalRow, type Result, type Ticket } from "./lib";
+import { api, blankTicket, label, Unauthorized, type Bootstrap, type EvalRow, type Result, type Ticket, type Usage } from "./lib";
 import Login from "./Login";
 import { cx, Logo } from "./ui";
 import Compare from "./views/Compare";
@@ -24,6 +24,7 @@ export default function App() {
   const [view, setView] = useState<View>("new");
   const [results, setResults] = useState<Result[]>([]);
   const [evals, setEvals] = useState<EvalRow[]>([]);
+  const [usage, setUsage] = useState<Usage | null>(null);
   const [ticket, setTicket] = useState<Ticket>(blankTicket());
   const [current, setCurrent] = useState<Result | null>(null);
 
@@ -38,9 +39,10 @@ export default function App() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const [r, e] = await Promise.all([guard(api<Result[]>("/api/results")), guard(api<EvalRow[]>("/api/eval"))]);
+    const [r, e, u] = await Promise.all([guard(api<Result[]>("/api/results")), guard(api<EvalRow[]>("/api/eval")), guard(api<Usage>("/api/usage"))]);
     if (r) setResults(r);
     if (e) setEvals(e);
+    if (u) setUsage(u);
   }, [guard]);
 
   const load = useCallback(async () => {
@@ -121,7 +123,7 @@ export default function App() {
               {view === "new" && <NewTicket boot={boot} ticket={ticket} setTicket={setTicket} result={current} setResult={setCurrent} guard={guard} onSaved={refresh} />}
               {view === "inbox" && <Inbox results={results} clients={boot.clients} onOpen={open} />}
               {view === "compare" && <Compare boot={boot} ticket={ticket} setTicket={setTicket} guard={guard} />}
-              {view === "metrics" && <Metrics results={results} evals={evals} />}
+              {view === "metrics" && <Metrics results={results} evals={evals} usage={usage} />}
             </motion.div>
           </AnimatePresence>
         </div>
