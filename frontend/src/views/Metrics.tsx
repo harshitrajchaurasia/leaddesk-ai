@@ -1,23 +1,30 @@
 import { FlaskConical } from "lucide-react";
-import { label, pct, type EvalRow, type Result, type Usage } from "../lib";
+import { isOverdue, label, mins, pct, utc, type Bootstrap, type EvalRow, type Result, type Usage } from "../lib";
 import { Card, Empty } from "../ui";
 
-export default function Metrics({ results, evals, usage }: { results: Result[]; evals: EvalRow[]; usage: Usage | null }) {
-  const steps = Object.values(usage?.app ?? {});
-  const spend = steps.reduce((a, s) => a + s.usd, 0);
-  const calls = usage?.app.triage?.calls ?? 0;
+export default function Metrics({ results, evals, usage, boot }: { results: Result[]; evals: EvalRow[]; usage: Usage | null; boot: Bootstrap }) {
+  const waits = (rs: Result[]) => rs.filter((r) => r.approved_at && r.created_at).map((r) => (utc(r.approved_at)!.getTime() - utc(r.created_at)!.getTime()) / 60000).sort((a, b) => a - b);
+  const median = (xs: number[]) => (xs.length ? xs[Math.floor(xs.length / 2)] : null);
+  const ts = boot.time_saved, perTicket = ts.manual_minutes_per_ticket - ts.review_minutes_per_ticket;
+  const done = results.filter((r) => r.status !== "pending_approval").length;
+  const toApprove = median(waits(results));
+  const overdue = results.filter((r) => isOverdue(r)).length;
+  const app = usage?.app ?? {};
+  const ticketSteps = ["triage", "draft"].filter((k) => app[k]);
+  const spend = ticketSteps.reduce((a, k) => a + app[k].usd, 0);  // call notes are not tickets: shown separately
+  const calls = app.triage?.calls ?? 0;
   const n = results.length;
   const withMl = results.filter((r) => r.ml);
   const reviewed = results.filter((r) => r.status !== "pending_approval");
   const tiles = [
-    { k: "Processed", v: String(n), s: "tickets in the log" },
-    { k: "Avg latency", v: n ? `${(results.reduce((a, r) => a + r.latency_ms, 0) / n / 1000).toFixed(1)} s` : "—", s: "end to end" },
-    { k: "Human review", v: n ? pct(results.filter((r) => r.route.queue === "human_review").length / n) : "—", s: "low confidence or model failure" },
+    { k: "Est. time saved", v: done ? mins(done * perTicket) : "—", s: `${done} replies approved; assumes ${ts.manual_minutes_per_ticket} min by hand vs ${ts.review_minutes_per_ticket} to review` },
+    { k: "Time to approval", v: toApprove == null ? "—" : mins(toApprove), s: `median · ${overdue} overdue past SLA` },
+    { k: "Drafts edited", v: reviewed.length ? pct(reviewed.filter((r) => r.status === "edited").length / reviewed.length) : "—", s: "of approved replies" },
+    { k: "Human review", v: n ? pct(results.filter((r) => r.route.queue === "human_review").length / n) : "—", s: `of ${n} tickets: low confidence or model failure` },
+    { k: "Cost per ticket", v: calls ? `$${(spend / calls).toFixed(4)}` : "—", s: ticketSteps.map((k) => `${k} $${(app[k].usd / app[k].calls).toFixed(4)}`).join(" · ") + (app.call ? ` · call notes $${(app.call.usd / app.call.calls).toFixed(4)} each` : "") || "triage + draft" },
+    { k: "Avg latency", v: n ? `${(results.reduce((a, r) => a + r.latency_ms, 0) / n / 1000).toFixed(1)} s` : "—", s: "ticket in to draft ready" },
     { k: "Replacements", v: String(results.filter((r) => r.verdict?.verdict === "REPLACE").length), s: "approved by rules" },
     { k: "Local model agrees", v: withMl.length ? pct(withMl.filter((r) => r.ml!.category === r.triage.category).length / withMl.length) : "—", s: "with the LLM's category" },
-    { k: "Model spend", v: usage ? `$${spend.toFixed(3)}` : "—", s: "live tickets, all steps" },
-    { k: "Cost per ticket", v: calls ? `$${(spend / calls).toFixed(4)}` : "—", s: Object.entries(usage?.app ?? {}).map(([k, s]) => `${k} $${(s.usd / s.calls).toFixed(4)}`).join(" · ") || "triage + draft" },
-    { k: "Drafts edited", v: reviewed.length ? pct(reviewed.filter((r) => r.status === "edited").length / reviewed.length) : "—", s: "of approved replies" },
   ];
   const queues = Object.entries(results.reduce<Record<string, number>>((a, r) => ({ ...a, [r.route.queue]: (a[r.route.queue] ?? 0) + 1 }), {}))
     .sort((a, b) => b[1] - a[1]);
@@ -53,7 +60,7 @@ export default function Metrics({ results, evals, usage }: { results: Result[]; 
           <div className="mt-4 space-y-3.5">
             {queues.map(([q, c]) => (
               <div key={q}>
-                <div className="flex justify-between text-sm"><span className="font-medium text-slate-700">{label(q)}</span><span className="text-slate-500">{c}</span></div>
+                <div className="flex justify-between text-sm"><span className="font-medium text-slate-700">{label(q)}</span><span className="text-slate-500">{c}{(() => { const m = median(waits(results.filter((r) => r.route.queue === q))); return m == null ? "" : ` · approved in ${mins(m)}`; })()}</span></div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
                   <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-teal-400 transition-all duration-700" style={{ width: `${(100 * c) / n}%` }} />
                 </div>

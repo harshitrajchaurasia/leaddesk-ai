@@ -102,3 +102,12 @@ def test_failed_ghl_send_is_visible_and_retried(conn, monkeypatch):
     assert approve(conn, "GHL-m2", "draft").send_error
     r = approve(conn, "GHL-m2", "draft")
     assert r.ghl_message_id == "msg2" and r.send_error is None
+
+
+def test_timestamps_and_due_at(conn):
+    r = process_ticket(make_ticket(id="T-SLA"), conn, triage_fn=lambda t, c: make_triage(urgency="urgent"),
+                       draft_fn=lambda *a: "d", monday_fn=lambda r: None)
+    assert r.created_at and r.approved_at is None
+    assert (r.due_at - r.created_at).total_seconds() == r.route.sla_minutes * 60
+    a = approve(conn, "T-SLA", "d")
+    assert a.approved_at >= a.created_at and "due_at" in a.model_dump(mode="json")

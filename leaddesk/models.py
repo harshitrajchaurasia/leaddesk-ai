@@ -1,8 +1,8 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 Vertical = Literal["annuity", "iul", "life", "final_expense", "retirement_planning", "debt_relief"]
 Category = Literal["lead_quality", "billing", "campaign_change", "appointments", "tech_access", "cancellation", "other"]
@@ -85,6 +85,7 @@ class Route(BaseModel):
     priority: Urgency
     assignee: str | None = None
     reasons: list[str] = []
+    sla_minutes: int | None = None  # from config/rules.json by priority
 
 
 class MLOpinion(BaseModel):
@@ -106,6 +107,16 @@ class Result(BaseModel):
     status: Literal["pending_approval", "approved", "edited"] = "pending_approval"
     ghl_message_id: str | None = None  # set once the approved reply went out through GHL
     send_error: str | None = None
+    created_at: datetime | None = None  # naive UTC; None on rows saved before this field existed
+    approved_at: datetime | None = None
+
+    @computed_field
+    @property
+    def due_at(self) -> datetime | None:
+        """When a reply is due under the SLA; the UI flags pending tickets past it."""
+        if self.created_at is None or self.route.sla_minutes is None:
+            return None
+        return self.created_at + timedelta(minutes=self.route.sla_minutes)
     final_reply: str | None = None
 
 

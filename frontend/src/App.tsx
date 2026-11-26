@@ -127,7 +127,7 @@ export default function App() {
               {view === "inbox" && <Inbox results={results} clients={boot.clients} onOpen={open} />}
               {view === "calls" && <Calls boot={boot} guard={guard} />}
               {view === "compare" && <Compare boot={boot} ticket={ticket} setTicket={setTicket} guard={guard} />}
-              {view === "metrics" && <Metrics results={results} evals={evals} usage={usage} />}
+              {view === "metrics" && <Metrics results={results} evals={evals} usage={usage} boot={boot} />}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -2,11 +2,12 @@
 import re
 from datetime import datetime, timedelta
 
+from .config import RULES
 from .models import Client, DisputeVerdict, Lead
 
-REPLACEMENT_WINDOW_DAYS = 7
-ANNUITY_MIN_ASSETS = 100_000
-SPEED_TO_LEAD_MINUTES = 60
+REPLACEMENT_WINDOW_DAYS = RULES.dispute.replacement_window_days  # values live in config/rules.json
+ANNUITY_MIN_ASSETS = RULES.dispute.annuity_min_assets
+SPEED_TO_LEAD_MINUTES = RULES.dispute.speed_to_lead_minutes
 
 
 def _valid_us_phone(phone: str) -> bool:

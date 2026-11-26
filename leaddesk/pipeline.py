@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from typing import Literal
 
 from . import db, ghl, llm, ml, monday
@@ -34,7 +35,7 @@ def process_ticket(ticket: Ticket, conn, *, provider: Literal["claude", "grok"] 
         verdict = check_lead(lead, client, ticket.received_at)
     r = route(triage, verdict, client)
     draft = draft_fn(text, triage, verdict, client)
-    result = Result(ticket=ticket, triage=triage, ml=local and MLOpinion(category=local.category, confidence=local.confidence),
+    result = Result(created_at=datetime.now(timezone.utc).replace(tzinfo=None), ticket=ticket, triage=triage, ml=local and MLOpinion(category=local.category, confidence=local.confidence),
                     verdict=verdict, route=r, draft_reply=draft, provider=provider,
                     latency_ms=int((time.perf_counter() - start) * 1000))
     result.monday_item_id = monday_fn(result)
@@ -48,6 +49,7 @@ def approve(conn, ticket_id: str, final_reply: str) -> Result:
         raise KeyError(f"unknown ticket {ticket_id}")
     result.final_reply = final_reply
     result.status = "approved" if final_reply.strip() == result.draft_reply.strip() else "edited"
+    result.approved_at = result.approved_at or datetime.now(timezone.utc).replace(tzinfo=None)
     if result.ticket.ghl_contact_id and ghl.enabled() and not result.ghl_message_id:  # never text a contact twice
         result.ghl_message_id = ghl.send_reply(result, final_reply)
         result.send_error = None if result.ghl_message_id else "GHL send failed: approve again to retry, or reply in GHL"

@@ -1,0 +1,37 @@
+{
+  "_read_me": "Business rules for LeadDesk. Edit a value, restart the app (sudo systemctl restart leaddesk-api), then re-run the eval (python -m evals.run_eval --set all). The app refuses to start if a value is invalid. See docs/SOP.md.",
+
+  "confidence_min": 0.7,
+  "churn_min": 0.7,
+
+  "category_queue": {
+    "billing": "billing",
+    "campaign_change": "campaign_ops",
+    "appointments": "account_manager",
+    "tech_access": "support",
+    "other": "human_review"
+  },
+
+  "queue_owners": {
+    "lead_ops": "Lead Ops team",
+    "billing": "Billing team",
+    "campaign_ops": "Campaign Ops team",
+    "support": "Support desk",
+    "human_review": "Support lead"
+  },
+  "_queue_owners_note": "account_manager tickets go to the client's own account manager (data/clients.json).",
+
+  "sla_minutes": {"urgent": 60, "high": 240, "normal": 1440, "low": 2880},
+
+  "dispute": {
+    "replacement_window_days": 7,
+    "annuity_min_assets": 100000,
+    "speed_to_lead_minutes": 60
+  },
+
+  "time_saved": {
+    "manual_minutes_per_ticket": 8,
+    "review_minutes_per_ticket": 2,
+    "_note": "Assumptions, shown as such on the Metrics page: handling a ticket by hand (read, look up the lead, decide, write) vs reviewing a drafted one. Replace with timings from the support team."
+  }
+}
