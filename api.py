@@ -2,12 +2,13 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import time
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import Cookie, Depends, FastAPI, HTTPException, Response
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -23,18 +24,49 @@ conn = db.connect()
 db.seed(conn)
 WEB = Path(__file__).parent / "web"
 COOKIE = "ld_session"
+log = logging.getLogger("uvicorn.error")  # shows up in journalctl next to the access log
 
 
 # --- auth: in-app login for the hosted demo (no DEMO_PASS = open, for local dev) ---------------------------------
-def _token(user: str) -> str:
-    # ponytail: stateless signed cookie, no expiry; rotating DEMO_PASS logs everyone out
-    return hmac.new(os.getenv("DEMO_PASS", "").encode(), user.encode(), hashlib.sha256).hexdigest()
+SESSION_TTL = 7 * 86400
+
+
+def _key() -> bytes:
+    # Key derives from the login, so rotating DEMO_PASS signs everyone out.
+    return hashlib.sha256(f"leaddesk:{os.getenv('DEMO_USER', '')}:{os.getenv('DEMO_PASS', '')}".encode()).digest()
+
+
+def _token(expiry: int) -> str:
+    return f"{expiry}." + hmac.new(_key(), str(expiry).encode(), hashlib.sha256).hexdigest()
 
 
 def _authed(session: str | None) -> bool:
     if not os.getenv("DEMO_PASS"):
         return True
-    return bool(session) and hmac.compare_digest(session, _token(os.getenv("DEMO_USER", "")))
+    try:
+        expiry = int((session or "").split(".", 1)[0])
+    except ValueError:
+        return False
+    return expiry > time.time() and hmac.compare_digest(session.encode(), _token(expiry).encode())
+
+
+# ponytail: in-memory limiter, fine for one worker process; move to Redis if it ever runs several.
+FAILS_PER_IP, FAILS_GLOBAL, WINDOW = 5, 30, 15 * 60
+_fails: dict[str, list[float]] = {}
+
+
+def _recent(ip: str, now: float) -> list[float]:
+    hits = [t for t in _fails.get(ip, []) if t > now - WINDOW]
+    if hits:
+        _fails[ip] = hits
+    else:
+        _fails.pop(ip, None)
+    return hits
+
+
+def _locked(ip: str, now: float) -> bool:
+    total = sum(len(_recent(k, now)) for k in list(_fails))
+    return len(_recent(ip, now)) >= FAILS_PER_IP or total >= FAILS_GLOBAL
 
 
 def require_session(ld_session: str | None = Cookie(default=None)):
@@ -48,11 +80,23 @@ class Login(BaseModel):
 
 
 @app.post("/api/login")
-def login(body: Login, response: Response):
+def login(body: Login, request: Request, response: Response):
+    # Caddy sets X-Forwarded-For to CF-Connecting-IP, and the origin only admits Cloudflare.
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or request.client.host
+    now = time.time()
+    if _locked(ip, now):
+        log.warning("login locked out ip=%s", ip)
+        raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
     user, password = os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", "")
-    if not (hmac.compare_digest(body.username, user) and hmac.compare_digest(body.password, password)):
+    ok = hmac.compare_digest(body.username.encode(), user.encode()) & \
+        hmac.compare_digest(body.password.encode(), password.encode())
+    if not ok:
+        _fails.setdefault(ip, []).append(now)
+        log.warning("login failed ip=%s", ip)  # never log the typed username/password
         raise HTTPException(status_code=401, detail="Incorrect username or password")
-    response.set_cookie(COOKIE, _token(user), httponly=True, secure=True, samesite="lax", max_age=7 * 86400)
+    _fails.pop(ip, None)
+    response.set_cookie(COOKIE, _token(int(now) + SESSION_TTL), httponly=True, secure=True, samesite="lax",
+                        max_age=SESSION_TTL)
     return {"ok": True}
 
 

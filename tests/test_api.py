@@ -40,3 +40,17 @@ def test_login_gate(monkeypatch):
 
 def test_index_served():
     assert client.get("/").status_code == 200
+
+
+def test_login_lockout_and_expiry(monkeypatch):
+    monkeypatch.setenv("DEMO_USER", "demo")
+    monkeypatch.setenv("DEMO_PASS", "s3cret")
+    api._fails.clear()
+    c = TestClient(api.app)
+    for _ in range(api.FAILS_PER_IP):
+        assert c.post("/api/login", json={"username": "demo", "password": "nope"}).status_code == 401
+    # locked out even with the right password
+    assert c.post("/api/login", json={"username": "demo", "password": "s3cret"}).status_code == 429
+    api._fails.clear()
+    assert not api._authed(api._token(1))  # expired cookie
+    assert not api._authed("garbage")
