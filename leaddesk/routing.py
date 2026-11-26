@@ -1,18 +1,20 @@
+from .config import RULES
 from .models import Client, DisputeVerdict, Route, Triage
 
-CONFIDENCE_MIN = 0.7
-CHURN_MIN = 0.7
-
-CATEGORY_QUEUE = {
-    "billing": "billing",
-    "campaign_change": "campaign_ops",
-    "appointments": "account_manager",
-    "tech_access": "support",
-    "other": "human_review",
-}
+CONFIDENCE_MIN = RULES.confidence_min  # values live in config/rules.json
+CHURN_MIN = RULES.churn_min
+CATEGORY_QUEUE = RULES.category_queue
 
 
 def route(triage: Triage, verdict: DisputeVerdict | None, client: Client) -> Route:
+    """Queue + priority by rules; then every route gets an owner and an SLA from config."""
+    r = _route(triage, verdict, client)
+    r.assignee = client.account_manager if r.queue == "account_manager" else RULES.queue_owners.get(r.queue)
+    r.sla_minutes = RULES.sla_minutes[r.priority]
+    return r
+
+
+def _route(triage: Triage, verdict: DisputeVerdict | None, client: Client) -> Route:
     am = client.account_manager
     # Churn first: an at-risk client goes to their account manager even when the category is unclear,
     # because missing a cancellation costs more than a misrouted ticket.

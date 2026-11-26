@@ -1,5 +1,5 @@
 import { Inbox as InboxIcon } from "lucide-react";
-import { label, type Client, type Result } from "../lib";
+import { label, type Client, type Result, isOverdue } from "../lib";
 import { Badge, Card, Empty, PriorityBadge, StatusBadge, VERDICT } from "../ui";
 
 export default function Inbox({ results, clients, onOpen }: { results: Result[]; clients: Client[]; onOpen: (r: Result) => void }) {
@@ -21,7 +21,7 @@ export default function Inbox({ results, clients, onOpen }: { results: Result[];
                 <td className="px-4 py-3">{r.verdict && <Badge tone={VERDICT[r.verdict.verdict].tone}>{VERDICT[r.verdict.verdict].short}</Badge>}</td>
                 <td className="whitespace-nowrap px-4 py-3">{label(r.route.queue)}</td>
                 <td className="px-4 py-3"><PriorityBadge p={r.route.priority} /></td>
-                <td className="px-4 py-3"><StatusBadge s={r.status} /></td>
+                <td className="whitespace-nowrap px-4 py-3"><StatusBadge s={r.status} />{isOverdue(r) && <Badge tone="rose" className="ml-1.5">Overdue</Badge>}</td>
                 <td className="min-w-72 px-4 py-3 text-slate-600">{r.triage.summary}</td>
               </tr>
             ))}

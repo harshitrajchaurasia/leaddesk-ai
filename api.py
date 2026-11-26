@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from leaddesk import calls, db, ghl, llm
+from leaddesk.config import RULES
 from leaddesk.models import Ticket
 from leaddesk.pii import mask
 from leaddesk.pipeline import approve, process_ticket
@@ -128,6 +129,7 @@ def bootstrap():
     name = {"grok": "Grok", "claude": "Claude"}
     return {"provider": name[tp] if tp == dp else f"{name[tp]} triage · {name[dp]} drafts", "call_provider": name[llm.default_provider("call")],
             "has_claude": bool(os.getenv("ANTHROPIC_API_KEY")),
+            "time_saved": RULES.time_saved.model_dump(), "sla_minutes": RULES.sla_minutes,
             "clients": [c.model_dump() for c in db.list_clients(conn)],
             "samples": [{k: t[k] for k in ("id", "client_id", "channel", "subject", "body", "received_at")} for t in samples]}
 

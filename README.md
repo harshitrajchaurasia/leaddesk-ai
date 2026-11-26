@@ -62,9 +62,29 @@ can't change the verdict. The drafted reply is still model text, which is why a 
 
 Churn risk >= 0.7 goes to the account manager as urgent first, even when the model is unsure (a missed churn
 threat costs more than a misrouted ticket). Then low confidence (< 0.7) goes to human review, and cancellations go to
-the account manager.
-Lead disputes go to lead ops (or to the account manager for coaching when the lead was valid).
+the account manager. Lead disputes go to lead ops (or to the account manager for coaching when the lead was valid).
 Billing, campaign changes, appointments and tech issues go to their own queues.
+
+Every ticket gets an owner (the client's account manager, or the team that owns the queue) and a reply deadline by
+priority. The defaults are urgent 1 h, high 4 h, normal 1 day and low 2 days. The Inbox flags overdue tickets.
+
+### Rules live in one file
+
+Thresholds, queue owners, reply deadlines, dispute limits and the time-saved assumptions are in
+`config/rules.json`. Someone in ops can change them without touching code. The app checks the file at startup and
+refuses to run with a typo in it. [docs/SOP.md](docs/SOP.md) is the one-page guide for the support team: the daily
+routine, what each queue means, and how to change a rule safely.
+
+### Results
+
+The Metrics page tracks:
+- median time from ticket in to approved reply, per queue, and overdue tickets;
+- draft edit rate, human-review rate and replacements;
+- model cost per ticket and per step, from the per-call usage log;
+- estimated time saved: approved replies x (minutes to handle a ticket by hand - minutes to review a draft).
+
+Those two minute values are assumptions in `config/rules.json`, and the page labels them that way. They should be
+replaced with timings from the support team.
 
 ## Why it is built this way
 
