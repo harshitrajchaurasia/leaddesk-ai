@@ -28,7 +28,7 @@ export default function Metrics({ results, evals, usage, boot }: { results: Resu
   ];
   const queues = Object.entries(results.reduce<Record<string, number>>((a, r) => ({ ...a, [r.route.queue]: (a[r.route.queue] ?? 0) + 1 }), {}))
     .sort((a, b) => b[1] - a[1]);
-  const SETS = ["core", "hard", "blind"], PROVIDERS: Record<string, string> = { grok: "Grok", claude: "Claude", ml: "Local model" };
+  const SETS = ["core", "hard", "blind", "mixed"], PROVIDERS: Record<string, string> = { grok: "Grok", claude: "Claude", ml: "Local model" };
   const rows = [...evals].sort((a, b) => SETS.indexOf(String(a.set)) - SETS.indexOf(String(b.set)) || String(a.provider).localeCompare(String(b.provider)));
   const num = (v: unknown) => Number(v ?? 0);
   const cols: [string, (r: EvalRow) => string][] = [
@@ -69,7 +69,7 @@ export default function Metrics({ results, evals, usage, boot }: { results: Resu
           </div>
         </Card>
         <Card className="overflow-hidden xl:col-span-2">
-          <div className="p-5 pb-3"><h3 className="font-semibold">Triage eval · 40 everyday, 18 adversarial, 36 blind tickets</h3></div>
+          <div className="p-5 pb-3"><h3 className="font-semibold">Triage eval · 40 everyday, 18 adversarial, 36 blind, 12 mixed-intent tickets</h3></div>
           {!evals.length ? (
             <Empty icon={<FlaskConical className="size-7" />} title="No eval run yet">Run <code className="rounded bg-slate-100 px-1 font-mono text-xs">python -m evals.run_eval</code> to populate.</Empty>
           ) : (

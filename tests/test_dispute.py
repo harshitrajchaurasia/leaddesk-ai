@@ -26,7 +26,8 @@ def test_missing_lead(annuity_client):
 
 def test_clean_lead_fast_contact(annuity_client):
     v = verdict(annuity_client)
-    assert (v.verdict, v.reasons) == ("VALID_COACH", ["lead passes all checks"])
+    # clean record + fast call: nothing to coach, the complaint needs a human to verify
+    assert v.verdict == "NEEDS_REVIEW" and "passes all record checks" in v.reasons[0]
 
 
 def test_slow_contact(annuity_client):
@@ -54,7 +55,7 @@ def test_invalid_phone(annuity_client):
 
 
 def test_phone_with_country_code_ok(annuity_client):
-    assert verdict(annuity_client, phone="+1 (555) 201-3344").verdict == "VALID_COACH"
+    assert "invalid phone" not in verdict(annuity_client, phone="+1 (555) 201-3344").reasons[0]
 
 
 def test_wrong_vertical(annuity_client):

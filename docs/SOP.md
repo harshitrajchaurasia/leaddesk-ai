@@ -9,8 +9,9 @@ One page for the people who work the queue. Nothing is sent to a client until a 
    - **Category and queue**: is it the right team? If not, reassign it in Monday and add a note.
    - **Lead check** (lead complaints only): *Replace lead* means the lead failed a rule, such as being shared, having
      no consent, or being out of state. The replacement is owed. *Valid lead · coach the agent* means the lead was fine,
-     and the reply explains what to do differently, usually calling sooner. These verdicts come from fixed rules, not
-     from the AI.
+     and the reply explains what to do differently, usually calling sooner. *Needs review* means the record looks clean
+     and the agent called quickly, so the complaint (a fax line, a fake answer) has to be checked by a person, for example
+     against the call recording. These verdicts come from fixed rules, not from the AI.
    - **Drafted reply**: read it, fix anything wrong, then **Approve**. Edits are counted. A high edit rate tells us
      the drafts need work.
 3. For tickets from Go High Level, approving sends the reply to the contact by SMS or email. If the send fails, the
