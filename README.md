@@ -72,7 +72,7 @@ Escalation reaches a person in Monday:
 - the item is assigned to the owner (a people column);
 - urgent tickets (churn, cancellations) and churn on a call send the owner a Monday notification straight away;
 - a systemd timer (`deploy/leaddesk-escalate.timer`, every 10 minutes) notifies the support lead once per ticket
-  that is still waiting past its deadline.
+  that is still waiting past its deadline. A backlog gets at most 5 notifications and one summary per run.
 
 Only Monday users on an allowlist (`MONDAY_NOTIFY_USER_IDS`) are ever assigned or notified.
 

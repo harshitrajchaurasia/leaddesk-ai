@@ -85,6 +85,11 @@ def claim(conn, ticket_id: str) -> bool:
     return cur.rowcount == 1
 
 
+def unmark_escalated(conn, ticket_id: str) -> None:
+    conn.execute("delete from escalations where ticket_id = ?", (ticket_id,))
+    conn.commit()
+
+
 def release(conn, ticket_id: str) -> None:
     conn.execute("delete from webhook_claims where id = ?", (ticket_id,))
     conn.commit()

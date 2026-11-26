@@ -27,9 +27,13 @@ def user_for(owner: str | None) -> int | None:
     """The Monday user who owns a queue, or None. Two env vars, both required:
     MONDAY_PEOPLE maps owner names (from config/rules.json and data/clients.json) to Monday user ids, and
     MONDAY_NOTIFY_USER_IDS is the allowlist. Nobody outside the allowlist is ever assigned or notified."""
-    allowed = {int(x) for x in os.getenv("MONDAY_NOTIFY_USER_IDS", "").split(",") if x.strip()}
-    uid = json.loads(os.getenv("MONDAY_PEOPLE") or "{}").get(owner or "")
-    return int(uid) if uid is not None and int(uid) in allowed else None
+    try:
+        allowed = {int(x) for x in os.getenv("MONDAY_NOTIFY_USER_IDS", "").split(",") if x.strip()}
+        uid = json.loads(os.getenv("MONDAY_PEOPLE") or "{}").get(owner or "")
+        return int(uid) if uid is not None and int(uid) in allowed else None
+    except (ValueError, TypeError, AttributeError) as e:  # a config typo must never break ticket handling
+        log.warning("MONDAY_PEOPLE / MONDAY_NOTIFY_USER_IDS invalid: %r", e)
+        return None
 
 
 NOTIFY = "mutation ($user: ID!, $item: ID!, $text: String!) { create_notification (user_id: $user, target_id: $item, target_type: Project, text: $text) { text } }"

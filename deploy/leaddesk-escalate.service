@@ -1,7 +1,10 @@
 [Unit]
 Description=LeadDesk: escalate overdue tickets
 
+After=network-online.target
+
 [Service]
+NoNewPrivileges=yes
 Type=oneshot
 User=ubuntu
 WorkingDirectory=/home/ubuntu/projects/leaddesk-ai

@@ -32,8 +32,10 @@ One page for the people who work the queue. Nothing is sent to a client until a 
 
 Reply deadlines by priority: urgent 1 hour, high 4 hours, normal 1 day, low 2 days.
 
-You'll get a Monday notification when an urgent ticket (a cancellation or churn risk) lands in your queue. The
-support lead gets one when a ticket passes its deadline without an approved reply. Each overdue ticket triggers it once.
+If you're set up for Monday notifications (ask the maintainer), you'll get one when an urgent ticket (a cancellation
+or churn risk) lands in your queue. The support lead gets one when a ticket passes its deadline without an approved
+reply, once per ticket; if there's a backlog, the first 5 come one by one, then a single "N more" summary.
+Notifications are a nudge, not the record: the Inbox always shows what's overdue.
 
 ## Changing a rule
 
