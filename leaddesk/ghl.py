@@ -3,8 +3,9 @@
 Flow: GHL InboundMessage webhook -> ticket (client found via a contact custom field) -> pipeline -> tags + a note on
 the contact -> after a human approves, the reply goes out as a GHL conversation message on the same channel.
 
-Endpoints, the `Version: v3` header and the field names are taken from marketplace.gohighlevel.com/docs (checked
-2026-11-26: contacts/get-contact, add-tags, create-note, conversations/send-a-new-message, webhook/InboundMessage).
+Endpoints and field names are taken from marketplace.gohighlevel.com/docs (checked 2026-11-26: contacts/get-contact,
+add-tags, create-note, conversations/send-a-new-message, webhook/InboundMessage). Those pages say "Version: v3" and list
+2021-07-28 / 2023-02-21 as older versions; GHL_API_VERSION overrides it if a location still expects an older one.
 Not yet run against a live GHL location: try it on a sandbox sub-account first.
 Private Integration scopes needed: contacts.readonly, contacts.write, conversations/message.write.
 """
@@ -33,7 +34,7 @@ def _call(method: str, path: str, *, http=requests.request, strict: bool = False
     or raise GhlError when strict (callers that must tell "GHL failed" apart from "nothing there")."""
     try:
         r = http(method, BASE + path, timeout=15, **kw,
-                 headers={"Authorization": f"Bearer {os.getenv('GHL_API_KEY', '')}", "Version": "v3", "Accept": "application/json"})
+                 headers={"Authorization": f"Bearer {os.getenv('GHL_API_KEY', '')}", "Version": os.getenv("GHL_API_VERSION", "v3"), "Accept": "application/json"})
         r.raise_for_status()
         return r.json()
     except Exception as e:

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # One-shot deploy for an Oracle Cloud Ubuntu VM (22.04/24.04, x86 or ARM).
-# Puts the FastAPI app (UI + webhook, 8000) behind Caddy with HTTPS + a demo password.
+# Puts the FastAPI app (UI + webhook, 8000) behind Caddy with HTTPS. The UI has its own login;
+# Caddy adds basic auth on /webhook/*, /docs and /openapi.json.
 #
 # Usage, from the repo folder on the VM (with .env already filled in):
-#   DEMO_USER=demo DEMO_PASS='pick-a-password' bash deploy/setup.sh
+#   DEMO_USER=ld-$(openssl rand -hex 5) DEMO_PASS=$(openssl rand -base64 18) bash deploy/setup.sh
 # Optional: DOMAIN=your.domain.com   (default: <public-ip>.sslip.io, free DNS that points at your IP)
 set -euo pipefail
 
@@ -59,7 +60,10 @@ $DOMAIN {
 	basic_auth @protected {
 		$DEMO_USER $HASH
 	}
-	reverse_proxy 127.0.0.1:8000
+	reverse_proxy 127.0.0.1:8000 {
+		# the app's login lockout keys on this; behind Cloudflare use {http.request.header.CF-Connecting-IP}
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 EOF
 
