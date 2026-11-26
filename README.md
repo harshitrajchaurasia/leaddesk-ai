@@ -7,6 +7,8 @@ a reply is drafted for human approval, and an item lands on a Monday.com board.
 Built with Claude Code as a prototype support desk for an agency that sells exclusive Meta/Facebook leads
 to annuity, IUL, life, final-expense and retirement-planning agents.
 
+**[Live demo](https://leaddesk.saakura.dev)** (it calls paid LLM APIs, so it needs a login - [ask me for one](https://harshit.saakura.dev/projects/#login)) - part of my [side projects](https://harshit.saakura.dev/projects/)
+
 ## The problem
 
 An agency like this gets the same tickets all day from its agent clients:
@@ -135,3 +137,7 @@ evals/          triage eval
 4. Auto-send for low-risk categories once the human edit rate is under ~10%.
 5. Feed dispute verdicts back to the media team: which campaigns and ad sets produce bad leads.
 6. Consent (TCPA), Do-Not-Call and quiet-hours checks before any SMS follow-up.
+
+## License
+
+MIT. Free to use, change and ship, see [LICENSE](LICENSE).
