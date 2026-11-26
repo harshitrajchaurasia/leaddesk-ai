@@ -47,6 +47,8 @@ def test_send_reply_uses_ticket_channel():
     assert http.calls[0][2]["json"]["type"] == "SMS" and http.calls[0][2]["json"]["message"] == "hello"
     ghl.send_reply(make_result(ticket=make_ticket(ghl_contact_id="ct1", channel="email", subject="Bad lead")), "hi", http=http)
     assert http.calls[1][2]["json"]["type"] == "Email" and http.calls[1][2]["json"]["subject"] == "Re: Bad lead"
+    ghl.send_reply(make_result(ticket=make_ticket(ghl_contact_id="ct1", channel="email")), "Hi <b>\n\nline2", http=http)
+    assert http.calls[2][2]["json"]["html"] == "<p>Hi &lt;b&gt;</p><p>line2</p>"
 
 
 def test_ghl_down_never_raises():
