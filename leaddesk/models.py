@@ -130,6 +130,7 @@ class Result(BaseModel):
     provider: str
     latency_ms: int
     monday_item_id: str | None = None
+    monday_board_id: str | None = None  # the board that item is on (escalation only pings items on the current board)
     status: Literal["pending_approval", "approved", "edited"] = "pending_approval"
     ghl_message_id: str | None = None  # set once the approved reply went out through GHL
     send_error: str | None = None

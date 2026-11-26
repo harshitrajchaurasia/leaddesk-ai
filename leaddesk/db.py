@@ -10,6 +10,7 @@ create table if not exists clients (id text primary key, data text not null);
 create table if not exists leads (id text primary key, data text not null);
 create table if not exists results (ticket_id text primary key, created_at text default current_timestamp, data text not null);
 create table if not exists webhook_claims (id text primary key, at text default current_timestamp);
+create table if not exists escalations (ticket_id text primary key, at text default current_timestamp);
 create table if not exists calls (id text primary key, created_at text default current_timestamp, data text not null);
 """
 
@@ -84,6 +85,18 @@ def claim(conn, ticket_id: str) -> bool:
     return cur.rowcount == 1
 
 
+def unmark_escalated(conn, ticket_id: str) -> None:
+    conn.execute("delete from escalations where ticket_id = ?", (ticket_id,))
+    conn.commit()
+
+
 def release(conn, ticket_id: str) -> None:
     conn.execute("delete from webhook_claims where id = ?", (ticket_id,))
     conn.commit()
+
+
+def mark_escalated(conn, ticket_id: str) -> bool:
+    """True the first time only, so an overdue ticket is escalated once."""
+    cur = conn.execute("insert or ignore into escalations (ticket_id) values (?)", (ticket_id,))
+    conn.commit()
+    return cur.rowcount == 1

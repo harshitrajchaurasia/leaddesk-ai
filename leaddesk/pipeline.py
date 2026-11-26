@@ -1,3 +1,4 @@
+import os
 import re
 import time
 from datetime import datetime, timezone
@@ -51,6 +52,7 @@ def process_ticket(ticket: Ticket, conn, *, provider: Literal["claude", "grok"] 
                     verdict=verdict, route=r, draft_reply=draft, provider=provider,
                     latency_ms=int((time.perf_counter() - start) * 1000))
     result.monday_item_id = monday_fn(result)
+    result.monday_board_id = result.monday_item_id and os.getenv("MONDAY_BOARD_ID")
     db.save_result(conn, result)
     return result
 
