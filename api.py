@@ -34,8 +34,20 @@ SESSION_TTL = 7 * 86400
 
 
 def _key() -> bytes:
-    # Key derives from the login, so rotating DEMO_PASS signs everyone out.
-    return hashlib.sha256(f"leaddesk:{os.getenv('DEMO_USER', '')}:{os.getenv('DEMO_PASS', '')}".encode()).digest()
+    # Key derives from the logins, so changing DEMO_PASS or EXTRA_LOGINS signs everyone out.
+    return hashlib.sha256(f"leaddesk:{os.getenv('DEMO_USER', '')}:{os.getenv('DEMO_PASS', '')}:{os.getenv('EXTRA_LOGINS', '')}".encode()).digest()
+
+
+def _login_ok(username: str, password: str) -> bool:
+    """DEMO_USER/DEMO_PASS, or any "user:pass" in EXTRA_LOGINS (comma separated), e.g. one login per reviewer."""
+    return any(hmac.compare_digest(username.encode(), u.encode()) & hmac.compare_digest(password.encode(), p.encode())
+               for u, p in _logins())
+
+
+def _logins() -> list[tuple[str, str]]:
+    pairs = [(os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", ""))]
+    pairs += [(u.strip(), p.strip()) for u, _, p in (x.partition(":") for x in os.getenv("EXTRA_LOGINS", "").split(","))]
+    return [(u, p) for u, p in pairs if u and p]
 
 
 def _token(expiry: int) -> str:
@@ -43,7 +55,7 @@ def _token(expiry: int) -> str:
 
 
 def _authed(session: str | None) -> bool:
-    if not os.getenv("DEMO_PASS"):
+    if not _logins():  # no login configured: open, for local dev
         return True
     try:
         expiry = int((session or "").split(".", 1)[0])
@@ -89,10 +101,7 @@ def login(body: Login, request: Request, response: Response):
     if _locked(ip, now):
         log.warning("login locked out ip=%s", ip)
         raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
-    user, password = os.getenv("DEMO_USER", ""), os.getenv("DEMO_PASS", "")
-    ok = hmac.compare_digest(body.username.encode(), user.encode()) & \
-        hmac.compare_digest(body.password.encode(), password.encode())
-    if not ok:
+    if not _login_ok(body.username, body.password):
         _fails.setdefault(ip, []).append(now)
         log.warning("login failed ip=%s", ip)  # never log the typed username/password
         raise HTTPException(status_code=401, detail="Incorrect username or password")

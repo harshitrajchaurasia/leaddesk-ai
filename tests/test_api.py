@@ -70,7 +70,7 @@ def test_usage_summary(monkeypatch):
             {"tag": "app", "step": "draft", "usd": 0.003, "ms": 2000}, {"tag": "eval", "step": "triage", "usd": 0.5, "ms": 1}]
     with open(llm.USAGE_PATH, "w") as f:  # conftest points USAGE_PATH at a tmp file
         f.write("".join(json.dumps(r) + "\n" for r in rows))
-    monkeypatch.delenv("DEMO_PASS", raising=False)
+    monkeypatch.delenv("DEMO_PASS", raising=False); monkeypatch.delenv("EXTRA_LOGINS", raising=False)
     got = client.get("/api/usage").json()
     assert got["app"]["triage"] == {"calls": 2, "usd": 0.003, "avg_ms": 1000}
     assert got["app"]["draft"]["usd"] == 0.003 and got["other_usd"] == 0.5
@@ -115,7 +115,7 @@ def test_ghl_webhook_off_without_config(monkeypatch):
 
 
 def test_approve_unknown_ticket_404(monkeypatch):
-    monkeypatch.delenv("DEMO_PASS", raising=False)
+    monkeypatch.delenv("DEMO_PASS", raising=False); monkeypatch.delenv("EXTRA_LOGINS", raising=False)
     assert client.post("/api/approve", json={"ticket_id": "NOPE", "final_reply": "x"}).status_code == 404
 
 
@@ -161,9 +161,18 @@ def test_ghl_other_channels_and_bad_payload(monkeypatch):
 
 
 def test_bootstrap_names_call_provider(monkeypatch):
-    monkeypatch.delenv("DEMO_PASS", raising=False)
+    monkeypatch.delenv("DEMO_PASS", raising=False); monkeypatch.delenv("EXTRA_LOGINS", raising=False)
     monkeypatch.setenv("TRIAGE_PROVIDER", "grok")
     monkeypatch.setenv("DRAFT_PROVIDER", "claude")
     monkeypatch.setenv("CALL_PROVIDER", "grok")
     b = client.get("/api/bootstrap").json()
     assert b["provider"] == "Grok triage · Claude drafts" and b["call_provider"] == "Grok"
+
+
+def test_extra_logins(monkeypatch):
+    monkeypatch.setenv("DEMO_USER", "demo"); monkeypatch.setenv("DEMO_PASS", "s3cret"); monkeypatch.setenv("EXTRA_LOGINS", "g:q, h2:r ,h:,:x")
+    assert api._login_ok("demo", "s3cret") and api._login_ok("g", "q")
+    assert not api._login_ok("g", "s3cret") and not api._login_ok("h", "") and not api._login_ok("demo", "q")
+    assert api._login_ok("h2", "r") and not api._login_ok("", "x")
+    monkeypatch.setenv("DEMO_PASS", "")
+    assert not api._authed(None)  # EXTRA_LOGINS alone still means a login is required
