@@ -103,7 +103,7 @@ export default function NewTicket({ boot, ticket, setTicket, result, setResult, 
                   <div className="eyebrow">Lead dispute check · rules in code, not the model</div>
                   <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
                     <Badge tone={v.tone} className="px-3 py-1 text-sm">{v.text}</Badge>
-                    {r.triage.lead_id && <span className="text-sm text-slate-500">for lead <b className="font-mono text-slate-700">{r.triage.lead_id}</b></span>}
+                    {(r.triage.lead_ids?.length ?? 0) > 0 && <span className="text-sm text-slate-500">for {r.triage.lead_ids!.length > 1 ? `${r.triage.lead_ids!.length} leads` : "lead"} <b className="font-mono text-slate-700">{r.triage.lead_ids!.join(", ")}</b></span>}
                   </div>
                   <Reasons items={r.verdict.reasons} />
                 </Card>

@@ -11,7 +11,7 @@ from .models import Client, DisputeVerdict, Triage
 from .prompts import DRAFT_SYSTEM, TRIAGE_SYSTEM
 
 log = logging.getLogger(__name__)
-FALLBACK_TRIAGE = Triage(category="other", urgency="normal", sentiment="neutral", churn_risk=0.0, lead_id=None,
+FALLBACK_TRIAGE = Triage(category="other", urgency="normal", sentiment="neutral", churn_risk=0.0, lead_id=None, lead_ids=[],
                          summary="model output invalid - needs human", confidence=0.0)
 ATTEMPTS = 2  # one retry on bad output; SDKs already retry 429/5xx themselves
 GROK_MODEL = "grok-4.20-0309-non-reasoning"

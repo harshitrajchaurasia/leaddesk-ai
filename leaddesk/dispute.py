@@ -17,6 +17,17 @@ def _valid_us_phone(phone: str) -> bool:
     return len(digits) == 10
 
 
+def check_leads(leads: dict[str, Lead | None], client: Client, complaint_at: datetime) -> DisputeVerdict:
+    """Several leads in one ticket: check each, then one verdict. REPLACE only if every lead fails a rule,
+    VALID_COACH only if every lead is valid; anything mixed goes to a person. Reasons name the lead."""
+    if len(leads) <= 1:
+        return check_lead(next(iter(leads.values()), None), client, complaint_at)
+    each = {lid: check_lead(lead, client, complaint_at) for lid, lead in leads.items()}
+    kinds = {v.verdict for v in each.values()}
+    verdict = kinds.pop() if len(kinds) == 1 else "NEEDS_REVIEW"
+    return DisputeVerdict(verdict=verdict, reasons=[f"{lid}: {'; '.join(v.reasons)}" for lid, v in each.items()])
+
+
 def check_lead(lead: Lead | None, client: Client, complaint_at: datetime) -> DisputeVerdict:
     if lead is None:
         return DisputeVerdict(verdict="NEEDS_REVIEW", reasons=["lead not found"])

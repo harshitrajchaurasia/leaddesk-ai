@@ -80,3 +80,13 @@ def test_outside_window_needs_review(annuity_client):
     v = check_lead(make_lead(consent_ts=None), annuity_client, CREATED + timedelta(days=9))
     assert v.verdict == "NEEDS_REVIEW"
     assert v.reasons == ["missing consent record", "outside 7-day replacement window"]
+
+
+def test_several_leads_one_verdict(annuity_client):
+    from leaddesk.dispute import check_leads
+    bad = make_lead(consent_ts=None)
+    ok = make_lead(first_contact_at=CREATED + timedelta(minutes=360))
+    assert check_leads({"L-1": bad, "L-2": bad}, annuity_client, COMPLAINT).verdict == "REPLACE"
+    mixed = check_leads({"L-1": bad, "L-2": ok}, annuity_client, COMPLAINT)
+    assert mixed.verdict == "NEEDS_REVIEW" and mixed.reasons[0].startswith("L-1: missing consent")
+    assert check_leads({}, annuity_client, COMPLAINT).reasons == ["lead not found"]

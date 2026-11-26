@@ -2,9 +2,18 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from pydantic import BaseModel, Field, computed_field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 Vertical = Literal["annuity", "iul", "life", "final_expense", "retirement_planning", "debt_relief"]
+MAX_LEADS_PER_TICKET = 20  # more than this in one ticket -> NEEDS_REVIEW, never a bulk REPLACE
+
+
+def normalise_lead_id(v: str | None) -> str | None:
+    """'l105', 'L 105', 'lead #105' -> 'L-105' so the lookup matches; anything else passes through."""
+    m = re.fullmatch(r"\s*(?:lead\s*#?|L)\s*-?\s*#?\s*(\d+)\s*", v or "", re.I)
+    return f"L-{m.group(1)}" if m else (v or None)
+
+
 Category = Literal["lead_quality", "billing", "campaign_change", "appointments", "tech_access", "cancellation", "other"]
 Urgency = Literal["low", "normal", "high", "urgent"]
 Queue = Literal["lead_ops", "account_manager", "billing", "campaign_ops", "support", "human_review"]
@@ -56,6 +65,7 @@ class LabeledTicket(Ticket):
     expected_category: Category | list[Category]  # a list when more than one reading is defensible
     expected_queue: Queue
     expected_lead_id: str | None = None  # only read when present in the JSON; else taken from the body
+    expected_lead_ids: list[str] | None = None  # multi-lead tickets: the full set, ranges expanded
 
 
 class Triage(BaseModel):
@@ -64,6 +74,7 @@ class Triage(BaseModel):
     sentiment: Literal["positive", "neutral", "frustrated", "angry"]
     churn_risk: float = Field(ge=0, le=1, description="0-1 likelihood the client cancels")
     lead_id: str | None = Field(description="Lead id like L-1042 if the ticket names one, else null")  # required: models skip optional fields
+    lead_ids: list[str] = Field(description="Every lead id the ticket names, ranges expanded (L-201 to L-203 -> L-201, L-202, L-203); [] if none")
     summary: str = Field(description="One line, max 25 words")
     confidence: float = Field(ge=0, le=1, description="0-1 confidence in the category")
 
@@ -71,8 +82,23 @@ class Triage(BaseModel):
     @classmethod
     def _normalise_lead_id(cls, v: str | None) -> str | None:
         """'l105', 'L 105', 'lead #105' -> 'L-105' so the lookup matches; anything else passes through."""
-        m = re.fullmatch(r"\s*(?:lead\s*#?|L)\s*-?\s*#?\s*(\d+)\s*", v or "", re.I)
-        return f"L-{m.group(1)}" if m else (v or None)
+        return normalise_lead_id(v)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _old_rows(cls, data):
+        """Rows saved before lead_ids existed still load (the field stays required in the schema the LLM sees)."""
+        if isinstance(data, dict) and "lead_ids" not in data:
+            data = {**data, "lead_ids": []}
+        return data
+
+    @model_validator(mode="after")
+    def _ids(self):
+        """Normalise + dedupe lead_ids and keep lead_id in it. No silent cap: the dispute check sends long lists to a person."""
+        ids = [normalise_lead_id(x) for x in ([self.lead_id] if self.lead_id else []) + self.lead_ids]
+        self.lead_ids = list(dict.fromkeys(i for i in ids if i))
+        self.lead_id = self.lead_ids[0] if self.lead_ids else None
+        return self
 
 
 class DisputeVerdict(BaseModel):

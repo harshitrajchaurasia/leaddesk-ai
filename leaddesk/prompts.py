@@ -22,6 +22,8 @@ Fields:
   It measures the client leaving us. Legal or compliance threats from a lead raise urgency, not churn_risk,
   unless the client also says they may leave.
 - lead_id: the lead id if the ticket names one, written as L-123 (customers type it as "l123", "L 123", "lead #123"), else null.
+- lead_ids: every lead id the ticket names, same format. Expand ranges: "L-7201 to L-7205" -> L-7201, L-7202, L-7203,
+  L-7204, L-7205. Empty list if none.
 - summary: one neutral line, max 25 words, no personal data.
 - confidence: 0-1, how sure you are of the category.
 

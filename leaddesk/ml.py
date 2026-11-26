@@ -52,6 +52,6 @@ def triage(text: str, client=None) -> Triage | None:
     p = predict(text)
     if p is None:
         return None
-    m = LEAD_ID.search(text)
-    return Triage(category=p[0], urgency="normal", sentiment="neutral", churn_risk=0.0, lead_id=m.group() if m else None,
+    ids = LEAD_ID.findall(text)  # a range yields only its endpoints; fine, the fallback always goes to a person
+    return Triage(category=p[0], urgency="normal", sentiment="neutral", churn_risk=0.0, lead_id=ids[0] if ids else None, lead_ids=ids,
                   summary="LLM unavailable: local model's category, needs a human check", confidence=round(p[1], 3))
