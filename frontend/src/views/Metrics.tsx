@@ -21,8 +21,19 @@ export default function Metrics({ results, evals, usage }: { results: Result[]; 
   ];
   const queues = Object.entries(results.reduce<Record<string, number>>((a, r) => ({ ...a, [r.route.queue]: (a[r.route.queue] ?? 0) + 1 }), {}))
     .sort((a, b) => b[1] - a[1]);
-  const cols = ["set", "provider", "category_acc", "queue_acc", "escalation_recall", "lead_id_acc", "avg_latency_ms", "usd_per_ticket"];
-  const cell = (v: unknown) => (v == null ? "—" : typeof v === "number" && v > 0 && v <= 1 && !Number.isInteger(v) ? pct(v) : String(v));
+  const SETS = ["core", "hard", "blind"], PROVIDERS: Record<string, string> = { grok: "Grok", claude: "Claude", ml: "Local model" };
+  const rows = [...evals].sort((a, b) => SETS.indexOf(String(a.set)) - SETS.indexOf(String(b.set)) || String(a.provider).localeCompare(String(b.provider)));
+  const num = (v: unknown) => Number(v ?? 0);
+  const cols: [string, (r: EvalRow) => string][] = [
+    ["Set", (r) => String(r.set ?? "core")],
+    ["Provider", (r) => PROVIDERS[String(r.provider)] ?? String(r.provider)],
+    ["Category", (r) => pct(num(r.category_acc))],
+    ["Queue", (r) => pct(num(r.queue_acc))],
+    ["Escalation", (r) => pct(num(r.escalation_recall))],
+    ["Lead id", (r) => pct(num(r.lead_id_acc))],
+    ["Latency", (r) => num(r.avg_latency_ms) < 100 ? `${num(r.avg_latency_ms)} ms` : `${(num(r.avg_latency_ms) / 1000).toFixed(1)} s`],
+    ["$/ticket", (r) => (num(r.usd_per_ticket) ? `$${num(r.usd_per_ticket).toFixed(5)}` : "$0")],
+  ];
 
   return (
     <div className="space-y-6">
@@ -35,7 +46,7 @@ export default function Metrics({ results, evals, usage }: { results: Result[]; 
           </Card>
         ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-3">
         <Card className="p-5">
           <h3 className="font-semibold">Tickets by queue</h3>
           {!n && <p className="mt-3 text-sm text-slate-500">Process a few tickets to see the distribution.</p>}
@@ -50,15 +61,15 @@ export default function Metrics({ results, evals, usage }: { results: Result[]; 
             ))}
           </div>
         </Card>
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden xl:col-span-2">
           <div className="p-5 pb-3"><h3 className="font-semibold">Triage eval · 40 everyday, 18 adversarial, 36 blind tickets</h3></div>
           {!evals.length ? (
             <Empty icon={<FlaskConical className="size-7" />} title="No eval run yet">Run <code className="rounded bg-slate-100 px-1 font-mono text-xs">python -m evals.run_eval</code> to populate.</Empty>
           ) : (
             <div className="overflow-x-auto px-5 pb-5">
               <table className="w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500"><tr>{cols.map((k) => <th key={k} className="py-2 pr-4 font-semibold">{label(k)}</th>)}</tr></thead>
-                <tbody className="divide-y divide-slate-100">{evals.map((row, i) => <tr key={i}>{cols.map((k) => <td key={k} className="py-2.5 pr-4">{k === "usd_per_ticket" ? `$${Number(row[k] ?? 0).toFixed(5)}` : cell(row[k])}</td>)}</tr>)}</tbody>
+                <thead className="text-left text-xs uppercase tracking-wide text-slate-500"><tr>{cols.map(([k]) => <th key={k} className="whitespace-nowrap py-2 pr-4 font-semibold">{k}</th>)}</tr></thead>
+                <tbody className="divide-y divide-slate-100">{rows.map((row, i) => <tr key={i}>{cols.map(([k, f]) => <td key={k} className="whitespace-nowrap py-2.5 pr-4 tabular-nums">{f(row)}</td>)}</tr>)}</tbody>
               </table>
             </div>
           )}
