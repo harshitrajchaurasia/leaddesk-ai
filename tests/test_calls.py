@@ -24,9 +24,9 @@ def test_process_call_masks_saves_and_sends_to_monday(conn):
     def analyze(text, client):
         seen["text"] = text
         return insight()
-    r = calls.process_call("CALL-1", "C-01", "Call me on 555-201-3344 or ellen@harbor.com about the invoice.", conn,
+    r = calls.process_call("CALL-1", "C-01", "Call me on 555-201-3344 or ellen@example.com about the invoice.", conn,
                            provider="grok", analyze_fn=analyze, monday_fn=lambda res, cl: sent.append(res) or "item-7")
-    assert "555-201-3344" not in seen["text"] and "ellen@harbor.com" not in seen["text"]
+    assert "555-201-3344" not in seen["text"] and "ellen@example.com" not in seen["text"]
     assert r.monday_item_id == "item-7" and db.list_calls(conn)[0].id == "CALL-1"
 
 
