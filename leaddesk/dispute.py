@@ -46,4 +46,6 @@ def check_lead(lead: Lead | None, client: Client, complaint_at: datetime) -> Dis
     minutes = int((lead.first_contact_at - lead.created_at).total_seconds() // 60)
     if minutes > SPEED_TO_LEAD_MINUTES:
         return DisputeVerdict(verdict="VALID_COACH", reasons=[f"first contact after {minutes} min"])
-    return DisputeVerdict(verdict="VALID_COACH", reasons=["lead passes all checks"])
+    # Record is clean and the agent called fast, so coaching would be wrong: the complaint is about something the record
+    # can't show (fax line, fake answer, wrong person). A human checks it, e.g. against the call recording.
+    return DisputeVerdict(verdict="NEEDS_REVIEW", reasons=[f"lead passes all record checks and first contact was after {minutes} min: verify the complaint"])

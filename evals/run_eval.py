@@ -24,7 +24,8 @@ def score(pairs: list[tuple]) -> float:
     return sum(a == b for a, b in pairs) / len(pairs) if pairs else 0.0
 
 
-SETS = {"core": "data/tickets.json", "hard": "data/tickets_hard.json", "blind": "data/tickets_blind.json"}
+SETS = {"core": "data/tickets.json", "hard": "data/tickets_hard.json", "blind": "data/tickets_blind.json",
+        "mixed": "data/tickets_mixed.json"}
 
 
 def run(provider: str, conn, tickets: list[LabeledTicket], name: str) -> dict:
@@ -83,7 +84,7 @@ def main():
     load_dotenv()
     p = argparse.ArgumentParser()
     p.add_argument("--provider", choices=["claude", "grok", "ml", "both"], default=None)
-    p.add_argument("--set", choices=["core", "hard", "blind", "all"], default="all")
+    p.add_argument("--set", choices=["core", "hard", "blind", "mixed", "all"], default="all")
     p.add_argument("--limit", type=int, default=None, help="only the first N tickets (cheap smoke run)")
     args = p.parse_args()
     llm.USAGE_TAG = "eval"

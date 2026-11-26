@@ -1,25 +1,90 @@
 [
  {
-  "set": "core",
-  "provider": "ml",
-  "model": "tfidf+logreg (local)",
-  "tickets": 40,
-  "category_acc": 0.95,
-  "queue_acc": 0.8,
+  "set": "hard",
+  "provider": "grok",
+  "model": "grok-4.20-0309-non-reasoning",
+  "tickets": 18,
+  "category_acc": 1.0,
+  "queue_acc": 1.0,
   "escalation_recall": 1.0,
   "lead_id_acc": 1.0,
-  "avg_latency_ms": 5,
+  "avg_latency_ms": 1126,
   "fallbacks": 0,
-  "usd_per_ticket": 0.0,
+  "usd_per_ticket": 0.00043,
+  "misses": []
+ },
+ {
+  "set": "blind",
+  "provider": "grok",
+  "model": "grok-4.20-0309-non-reasoning",
+  "tickets": 36,
+  "category_acc": 1.0,
+  "queue_acc": 1.0,
+  "escalation_recall": 1.0,
+  "lead_id_acc": 1.0,
+  "avg_latency_ms": 1082,
+  "fallbacks": 0,
+  "usd_per_ticket": 0.00044,
+  "misses": []
+ },
+ {
+  "set": "mixed",
+  "provider": "grok",
+  "model": "grok-4.20-0309-non-reasoning",
+  "tickets": 12,
+  "category_acc": 0.917,
+  "queue_acc": 1.0,
+  "escalation_recall": 1.0,
+  "lead_id_acc": 1.0,
+  "avg_latency_ms": 1131,
+  "fallbacks": 0,
+  "usd_per_ticket": 0.00043,
   "misses": [
-   "T-004: expected lead_quality/lead_ops, got lead_quality/human_review (conf 0.52, churn 0.00)",
-   "T-012: expected lead_quality/lead_ops, got campaign_change/human_review (conf 0.40, churn 0.00)",
-   "T-013: expected lead_quality/lead_ops, got lead_quality/human_review (conf 0.33, churn 0.00)",
-   "T-016: expected lead_quality/account_manager, got lead_quality/human_review (conf 0.69, churn 0.00)",
-   "T-021: expected billing/billing, got billing/human_review (conf 0.52, churn 0.00)",
-   "T-024: expected campaign_change/campaign_ops, got campaign_change/human_review (conf 0.35, churn 0.00)",
-   "T-025: expected campaign_change/campaign_ops, got lead_quality/human_review (conf 0.47, churn 0.00)",
-   "T-026: expected campaign_change/campaign_ops, got campaign_change/human_review (conf 0.48, churn 0.00)"
+   "M-03: expected cancellation/account_manager, got lead_quality/account_manager (conf 0.85, churn 0.80)"
+  ]
+ },
+ {
+  "set": "hard",
+  "provider": "claude",
+  "model": "claude-haiku-5-5",
+  "tickets": 18,
+  "category_acc": 1.0,
+  "queue_acc": 1.0,
+  "escalation_recall": 1.0,
+  "lead_id_acc": 1.0,
+  "avg_latency_ms": 1800,
+  "fallbacks": 0,
+  "usd_per_ticket": 0.00026,
+  "misses": []
+ },
+ {
+  "set": "blind",
+  "provider": "claude",
+  "model": "claude-haiku-5-5",
+  "tickets": 36,
+  "category_acc": 1.0,
+  "queue_acc": 1.0,
+  "escalation_recall": 1.0,
+  "lead_id_acc": 0.875,
+  "avg_latency_ms": 1585,
+  "fallbacks": 0,
+  "usd_per_ticket": 0.00024,
+  "misses": []
+ },
+ {
+  "set": "mixed",
+  "provider": "claude",
+  "model": "claude-haiku-5-5",
+  "tickets": 12,
+  "category_acc": 0.917,
+  "queue_acc": 0.917,
+  "escalation_recall": 1.0,
+  "lead_id_acc": 1.0,
+  "avg_latency_ms": 1716,
+  "fallbacks": 0,
+  "usd_per_ticket": 0.00026,
+  "misses": [
+   "M-12: expected billing/billing, got lead_quality/human_review (conf 0.60, churn 0.10)"
   ]
  },
  {
@@ -37,7 +102,7 @@
   "misses": [
    "H-02: expected lead_quality|cancellation/account_manager, got lead_quality/human_review (conf 0.57, churn 0.00)",
    "H-07: expected campaign_change/campaign_ops, got campaign_change/human_review (conf 0.60, churn 0.00)",
-   "H-09: expected cancellation|billing|lead_quality/account_manager, got billing/billing (conf 0.80, churn 0.00)"
+   "H-09: expected cancellation|billing|lead_quality/account_manager, got billing/billing (conf 0.81, churn 0.00)"
   ]
  },
  {
@@ -49,7 +114,7 @@
   "queue_acc": 0.833,
   "escalation_recall": 1.0,
   "lead_id_acc": 1.0,
-  "avg_latency_ms": 5,
+  "avg_latency_ms": 1,
   "fallbacks": 0,
   "usd_per_ticket": 0.0,
   "misses": [
@@ -62,31 +127,36 @@
   ]
  },
  {
-  "set": "blind",
-  "provider": "grok",
-  "model": "grok-4.20-0309-non-reasoning",
-  "tickets": 36,
-  "category_acc": 1.0,
-  "queue_acc": 1.0,
+  "set": "mixed",
+  "provider": "ml",
+  "model": "tfidf+logreg (local)",
+  "tickets": 12,
+  "category_acc": 0.833,
+  "queue_acc": 0.667,
   "escalation_recall": 1.0,
   "lead_id_acc": 1.0,
-  "avg_latency_ms": 1032,
+  "avg_latency_ms": 1,
   "fallbacks": 0,
-  "usd_per_ticket": 0.00072,
-  "misses": []
+  "usd_per_ticket": 0.0,
+  "misses": [
+   "M-03: expected cancellation/account_manager, got campaign_change/human_review (conf 0.30, churn 0.00)",
+   "M-04: expected cancellation/account_manager, got other/human_review (conf 0.45, churn 0.00)",
+   "M-05: expected appointments/account_manager, got appointments/human_review (conf 0.52, churn 0.00)",
+   "M-08: expected campaign_change/campaign_ops, got campaign_change/human_review (conf 0.62, churn 0.00)"
+  ]
  },
  {
-  "set": "blind",
-  "provider": "claude",
-  "model": "claude-haiku-5-5",
-  "tickets": 36,
+  "set": "core",
+  "provider": "grok",
+  "model": "grok-4.20-0309-non-reasoning",
+  "tickets": 40,
   "category_acc": 1.0,
   "queue_acc": 1.0,
   "escalation_recall": 1.0,
   "lead_id_acc": 1.0,
-  "avg_latency_ms": 1572,
+  "avg_latency_ms": 1098,
   "fallbacks": 0,
-  "usd_per_ticket": 0.00023,
+  "usd_per_ticket": 0.00048,
   "misses": []
  },
  {
@@ -98,51 +168,32 @@
   "queue_acc": 1.0,
   "escalation_recall": 1.0,
   "lead_id_acc": 1.0,
-  "avg_latency_ms": 1412,
+  "avg_latency_ms": 1405,
   "fallbacks": 0,
-  "usd_per_ticket": 0.00022,
+  "usd_per_ticket": 0.00021,
   "misses": []
  },
  {
   "set": "core",
-  "provider": "grok",
-  "model": "grok-4.20-0309-non-reasoning",
+  "provider": "ml",
+  "model": "tfidf+logreg (local)",
   "tickets": 40,
-  "category_acc": 1.0,
-  "queue_acc": 1.0,
+  "category_acc": 0.95,
+  "queue_acc": 0.8,
   "escalation_recall": 1.0,
   "lead_id_acc": 1.0,
-  "avg_latency_ms": 1039,
+  "avg_latency_ms": 5,
   "fallbacks": 0,
-  "usd_per_ticket": 0.00046,
-  "misses": []
- },
- {
-  "set": "hard",
-  "provider": "claude",
-  "model": "claude-haiku-5-5",
-  "tickets": 18,
-  "category_acc": 1.0,
-  "queue_acc": 1.0,
-  "escalation_recall": 1.0,
-  "lead_id_acc": 1.0,
-  "avg_latency_ms": 1651,
-  "fallbacks": 0,
-  "usd_per_ticket": 0.00025,
-  "misses": []
- },
- {
-  "set": "hard",
-  "provider": "grok",
-  "model": "grok-4.20-0309-non-reasoning",
-  "tickets": 18,
-  "category_acc": 1.0,
-  "queue_acc": 1.0,
-  "escalation_recall": 1.0,
-  "lead_id_acc": 1.0,
-  "avg_latency_ms": 1252,
-  "fallbacks": 0,
-  "usd_per_ticket": 0.00042,
-  "misses": []
+  "usd_per_ticket": 0.0,
+  "misses": [
+   "T-004: expected lead_quality/lead_ops, got lead_quality/human_review (conf 0.52, churn 0.00)",
+   "T-012: expected lead_quality/lead_ops, got campaign_change/human_review (conf 0.40, churn 0.00)",
+   "T-013: expected lead_quality/lead_ops, got lead_quality/human_review (conf 0.36, churn 0.00)",
+   "T-016: expected lead_quality/lead_ops, got lead_quality/human_review (conf 0.69, churn 0.00)",
+   "T-021: expected billing/billing, got billing/human_review (conf 0.52, churn 0.00)",
+   "T-024: expected campaign_change/campaign_ops, got campaign_change/human_review (conf 0.36, churn 0.00)",
+   "T-025: expected campaign_change/campaign_ops, got lead_quality/human_review (conf 0.47, churn 0.00)",
+   "T-026: expected campaign_change/campaign_ops, got campaign_change/human_review (conf 0.48, churn 0.00)"
+  ]
  }
 ]
