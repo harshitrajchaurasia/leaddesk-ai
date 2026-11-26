@@ -68,6 +68,13 @@ Billing, campaign changes, appointments and tech issues go to their own queues.
 
 Every ticket gets an owner (the client's account manager, or the team that owns the queue) and a reply deadline by
 priority. The defaults are urgent 1 h, high 4 h, normal 1 day and low 2 days. The Inbox flags overdue tickets.
+Escalation reaches a person in Monday:
+- the item is assigned to the owner (a people column);
+- urgent tickets (churn, cancellations) and churn on a call send the owner a Monday notification straight away;
+- a systemd timer (`deploy/leaddesk-escalate.timer`, every 10 minutes) notifies the support lead once per ticket
+  that is still waiting past its deadline.
+
+Only Monday users on an allowlist (`MONDAY_NOTIFY_USER_IDS`) are ever assigned or notified.
 
 ### Rules live in one file
 

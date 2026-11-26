@@ -72,8 +72,10 @@ RULE=(INPUT -p tcp -m multiport --dports 80,443 -m conntrack --ctstate NEW -j AC
 sudo iptables -C "${RULE[@]}" 2>/dev/null || sudo iptables -I "${RULE[@]}"
 command -v netfilter-persistent >/dev/null && sudo netfilter-persistent save
 
+sed "s#/home/ubuntu/projects/leaddesk-ai#$APP_DIR#g; s#User=ubuntu#User=$RUN_USER#" "$APP_DIR/deploy/leaddesk-escalate.service" | sudo tee /etc/systemd/system/leaddesk-escalate.service >/dev/null
+sudo cp "$APP_DIR/deploy/leaddesk-escalate.timer" /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now leaddesk-api
+sudo systemctl enable --now leaddesk-api leaddesk-escalate.timer
 sudo systemctl restart leaddesk-api caddy
 
 echo

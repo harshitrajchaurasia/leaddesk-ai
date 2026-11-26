@@ -32,6 +32,9 @@ One page for the people who work the queue. Nothing is sent to a client until a 
 
 Reply deadlines by priority: urgent 1 hour, high 4 hours, normal 1 day, low 2 days.
 
+You'll get a Monday notification when an urgent ticket (a cancellation or churn risk) lands in your queue. The
+support lead gets one when a ticket passes its deadline without an approved reply. Each overdue ticket triggers it once.
+
 ## Changing a rule
 
 All business rules live in one file: `config/rules.json`. It holds queue owners, reply deadlines, the churn and
